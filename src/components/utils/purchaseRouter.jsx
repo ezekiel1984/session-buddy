@@ -1,4 +1,6 @@
+import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
+import { logger } from '@/components/utils/logger';
 
 // ----------------------------------------------------------------------
 // DIAGNOSTICS (MASTER INSTRUCTION)
@@ -214,35 +216,33 @@ export const PurchaseRouter = {
                 try {
                     // Requirement: Prefer purchasePackage() over purchaseProduct()
                     // 2. If bridge.purchasePackage exists, call it
+                    const wrapMaybePromise = (ret) => {
+                        if (ret && typeof ret.then === 'function') {
+                            ret.then(() => cb(null)).catch((err) => cb(err));
+                        }
+                    };
+
                     if (typeof bridge.purchasePackage === 'function') {
-                        window.__PURCHASE_STATUS__ = `Call: purPackage`;
-                        bridge.purchasePackage(rcPackageId, cb);
-                    } 
+                        window.__PURCHASE_STATUS__ = `Call: purchasePackage`;
+                        const ret = bridge.purchasePackage(rcPackageId, cb);
+                        wrapMaybePromise(ret);
+                    }
                     // 3. Else if bridge.purchaseProduct exists AND we have a real store product id
-                    // NOTE: We do NOT have the real Apple product ID strings hardcoded here (user said "NOT 'monthly/yearly'").
-                    // If purchasePackage is missing, we can try purchaseProduct as a hail mary with the RC ID, 
-                    // but per instructions we should only use purchaseProduct if we have real Apple ID.
-                    // Since we don't have the real Apple ID available in this context (unless passed in), 
-                    // and we are instructed to use RC identifiers, we fallback to 'purchase' if available or fail.
+                    // We don't have real Store product IDs here; prefer generic purchase if available
                     else if (typeof bridge.purchaseProduct === 'function') {
-                         // We don't have the real product ID, so we skip calling this with the RC ID to avoid "Product not found"
-                         // Unless the bridge is smart enough to map it. 
-                         // But prompt says: "Only use purchaseProduct() if we have the real Apple product id string".
-                         // Since we don't, we probably shouldn't call it.
-                         // However, to avoid complete breakage if purchasePackage is missing but purchaseProduct is there...
-                         // I will fallback to generic 'purchase' if available.
-                         
-                         if (typeof bridge.purchase === 'function') {
-                             window.__PURCHASE_STATUS__ = `Call: purchase`;
-                             bridge.purchase(rcPackageId, cb);
-                         } else {
-                             window.__PURCHASE_STATUS__ = 'No Pkg Method';
-                             reject(new Error(`Native SDK missing purchasePackage method`));
-                         }
-                    } 
+                        if (typeof bridge.purchase === 'function') {
+                            window.__PURCHASE_STATUS__ = `Call: purchase`;
+                            const ret = bridge.purchase(rcPackageId, cb);
+                            wrapMaybePromise(ret);
+                        } else {
+                            window.__PURCHASE_STATUS__ = 'No Pkg Method';
+                            reject(new Error(`Native SDK missing purchasePackage method`));
+                        }
+                    }
                     else if (typeof bridge.purchase === 'function') {
                         window.__PURCHASE_STATUS__ = `Call: purchase`;
-                        bridge.purchase(rcPackageId, cb);
+                        const ret = bridge.purchase(rcPackageId, cb);
+                        wrapMaybePromise(ret);
                     }
                     else {
                         window.__PURCHASE_STATUS__ = 'No Method';

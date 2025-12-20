@@ -7,7 +7,7 @@ import { Crown, Check, Loader2 } from 'lucide-react';
 import BottomNav from '@/components/BottomNav';
 import { trackEvent, AnalyticsEvents } from '@/components/utils/analytics';
 import AgeGate from '@/components/AgeGate';
-import { PurchaseRouter } from '@/components/utils/purchaseRouter'; // Import router
+import { PurchaseRouter, isNativeBillingReady } from '@/components/utils/purchaseRouter'; // Import router
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { logger } from '@/components/utils/logger';
@@ -165,6 +165,10 @@ export default function Premium() {
       // NATIVE FLOW (REVENUECAT)
       // Only runs if isNative === true
       // ---------------------------------------------------------
+      // Debug bridge state before attempting upgrade
+      if (typeof window !== 'undefined' && typeof window.__SB_DEBUG_PURCHASES === 'function') {
+        logger.debug('[Premium] __SB_DEBUG_PURCHASES pre-upgrade:', window.__SB_DEBUG_PURCHASES());
+      }
       const result = await PurchaseRouter.startUpgrade(plan, user.id);
 
       if (result.ok) {
