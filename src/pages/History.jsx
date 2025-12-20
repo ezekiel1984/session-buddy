@@ -1,7 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createPageUrl, trackEvent, AnalyticsEvents } from '@/utils';
+import { createPageUrl } from '@/utils';
+import { trackEvent, AnalyticsEvents } from '@/components/utils/analytics';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Calendar, Trash2, Loader2, Clock, RefreshCw, Brain, Plus, ChevronDown, ChevronUp } from 'lucide-react';
@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { getMethodDisplay } from '@/components/utils/methodLabels';
+import { calculateBuzzScore } from '@/components/utils/buzzCalculator';
 import { formatDistanceToNow } from 'date-fns';
 import OnboardingTooltip from '@/components/OnboardingTooltip';
 
@@ -27,7 +28,7 @@ export default function History() {
   const [selectedSession, setSelectedSession] = useState(null); // This will hold a single 'dose' object
   const [deleting, setDeleting] = useState(false);
   const [timeFilter, setTimeFilter] = useState('all');
-  const [expandedDates, setExpandedDates] = new useState(new Set());
+  const [expandedDates, setExpandedDates] = useState(new Set());
 
   useEffect(() => {
     window.scrollTo(0, 0);
