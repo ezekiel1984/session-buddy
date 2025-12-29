@@ -69,6 +69,15 @@ const getPurchasesBridge = () => {
     return { bridge: null, source: 'none' };
 };
 
+const isLikelyNativeEnvironment = () => {
+    if (typeof window === 'undefined') return false;
+    const ua = navigator.userAgent || '';
+    return /Natively|BuildNatively/i.test(ua) ||
+        window.__NATIVELY__ === true ||
+        !!(window.natively && window.natively.purchases) ||
+        !!window.NativelyPurchases;
+};
+
 const isBridgeValid = (bridge) => {
     if (!bridge) return false;
     // Check for ANY purchase method
@@ -77,16 +86,60 @@ const isBridgeValid = (bridge) => {
            typeof bridge.purchase === 'function';
 };
 
+const formatBridgeError = (err) => {
+    if (!err) return 'Unknown error';
+    if (typeof err === 'string') return err;
+    return err.message || err.code || JSON.stringify(err);
+};
+
+const withTimeout = (promise, timeoutMs, timeoutMessage) => {
+    let timeoutId;
+    const timeoutPromise = new Promise((_, reject) => {
+        timeoutId = setTimeout(() => reject(new Error(timeoutMessage)), timeoutMs);
+    });
+    return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timeoutId));
+};
+
+const resolveOfferings = (bridge) => {
+    if (!bridge || typeof bridge.getOfferings !== 'function') {
+        return Promise.resolve(null);
+    }
+
+    return new Promise((resolve, reject) => {
+        let resolved = false;
+        const cb = (err, offerings) => {
+            if (resolved) return;
+            resolved = true;
+            if (err) return reject(new Error(formatBridgeError(err)));
+            resolve(offerings);
+        };
+
+        try {
+            const ret = bridge.getOfferings(cb);
+            if (ret && typeof ret.then === 'function') {
+                ret.then(resolve).catch((err) => reject(new Error(formatBridgeError(err))));
+                return;
+            }
+            if (ret && !resolved) {
+                resolved = true;
+                resolve(ret);
+            }
+        } catch (err) {
+            reject(new Error(formatBridgeError(err)));
+        }
+    });
+};
+
 // ----------------------------------------------------------------------
 // 2. PUBLIC API
 // ----------------------------------------------------------------------
 
 export const PurchaseRouter = {
+    isNativeEnvironment: () => isLikelyNativeEnvironment(),
 
     isNativeBilling: () => {
         if (typeof window === 'undefined') return false;
-        const ua = navigator.userAgent || '';
-        const looksNative = /Natively|BuildNatively/i.test(ua) || window.__NATIVELY__ === true;
+        const looksNative = isLikelyNativeEnvironment();
         if (!looksNative) return false;
         const { bridge } = getPurchasesBridge();
         return isBridgeValid(bridge);
@@ -98,8 +151,7 @@ export const PurchaseRouter = {
 
     waitForNativeBridge: async (timeoutMs = 3000) => {
         if (typeof window === 'undefined') return false;
-        const ua = navigator.userAgent || '';
-        const looksNative = /Natively|BuildNatively/i.test(ua) || window.__NATIVELY__ === true;
+        const looksNative = isLikelyNativeEnvironment();
         if (!looksNative) return false;
         if (PurchaseRouter.isNativeBilling()) return true;
         
@@ -112,6 +164,7 @@ export const PurchaseRouter = {
                 }
                 if (Date.now() - start > timeoutMs) {
                     clearInterval(interval);
+                    logger.warn('[PurchaseRouter] Native bridge wait timed out');
                     resolve(false);
                 }
             }, 100);
@@ -197,12 +250,24 @@ export const PurchaseRouter = {
             // Requirement: Use RevenueCat PACKAGE identifiers
             const rcPackageId = plan === 'monthly' ? '$rc_monthly' : '$rc_annual';
             window.__PURCHASE_STATUS__ = `Buying ${rcPackageId}...`;
+
+            if (typeof bridge.getOfferings === 'function') {
+                window.__PURCHASE_STATUS__ = 'Fetching offerings...';
+                try {
+                    await withTimeout(resolveOfferings(bridge), 15000, 'Offerings timeout');
+                    logger.debug('[PurchaseRouter] Offerings resolved');
+                } catch (err) {
+                    logger.error('[PurchaseRouter] Offerings error', err);
+                    window.__PURCHASE_STATUS__ = `OfferingsErr`;
+                    return { ok: false, error: `Offerings failed: ${err.message}` };
+                }
+            }
             
             // TIMEOUT WRAPPER
             const purchasePromise = new Promise((resolve, reject) => {
                 const cb = (err) => {
                     if (err) {
-                        const message = typeof err === 'string' ? err : (err?.message || err?.code || JSON.stringify(err));
+                        const message = formatBridgeError(err);
                         const lower = (message || '').toString().toLowerCase();
                         window.__PURCHASE_STATUS__ = `Err: ${lower.substring(0, 10)}`;
                         if (lower.includes('cancel')) reject(new Error('User cancelled'));
@@ -255,11 +320,7 @@ export const PurchaseRouter = {
             });
 
             // Extended Timeout (TestFlight may be slow)
-            const timeoutPromise = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Bridge Timeout')), 60000)
-            );
-
-            await Promise.race([purchasePromise, timeoutPromise]);
+            await withTimeout(purchasePromise, 60000, 'Bridge Timeout');
 
             // Requirement: Entitlement sync after successful purchase
             window.__PURCHASE_STATUS__ = 'Syncing...';

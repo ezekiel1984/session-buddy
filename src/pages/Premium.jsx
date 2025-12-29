@@ -7,7 +7,8 @@ import { Crown, Check, Loader2 } from 'lucide-react';
 import BottomNav from '@/components/BottomNav';
 import { trackEvent, AnalyticsEvents } from '@/components/utils/analytics';
 import AgeGate from '@/components/AgeGate';
-import { PurchaseRouter, isNativeBillingReady } from '@/components/utils/purchaseRouter'; // Import router
+import { PurchaseRouter } from '@/components/utils/purchaseRouter'; // Import router
+import { useNativelyEnvironment } from '@/components/utils/natively';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { logger } from '@/components/utils/logger';
@@ -20,6 +21,7 @@ export default function Premium() {
   const [checkoutLoading, setCheckoutLoading] = useState(null);
   const [showAgeGate, setShowAgeGate] = useState(false);
   const [restoring, setRestoring] = useState(false);
+  const nativeEnv = useNativelyEnvironment();
   
   // Initialize with Standard Web Prices immediately (Requirement #1)
   const [displayPrices, setDisplayPrices] = useState({ 
@@ -37,8 +39,7 @@ export default function Premium() {
       // 1. Check Native Readiness (with timeout)
       await PurchaseRouter.waitForNativeBridge(3000);
 
-      const ua = navigator.userAgent || '';
-      const looksNative = /Natively|BuildNatively/i.test(ua) || window.__NATIVELY__ === true;
+      const looksNative = PurchaseRouter.isNativeEnvironment() || nativeEnv.isNativeApp;
       setIsNative(looksNative);
 
       const ready = PurchaseRouter.isNativeBilling();
@@ -52,7 +53,7 @@ export default function Premium() {
 
     init();
     window.scrollTo(0, 0);
-  }, []);
+  }, [nativeEnv.isNativeApp]);
 
   // Reset checkout loading on visibility change (returning from Stripe)
   useEffect(() => {
@@ -112,6 +113,7 @@ export default function Premium() {
 
   const handleUpgrade = async (plan) => {
     setCheckoutLoading(plan);
+    let completed = false;
 
     // Watchdog timer: extend for native (TestFlight can be slow)
     const watchdog = setTimeout(() => {
@@ -131,7 +133,8 @@ export default function Premium() {
       // WEB / PWA FLOW (STRIPE)
       // Must execute immediately if not native. No Router usage.
       // ---------------------------------------------------------
-      if (!isNative) {
+      const looksNative = PurchaseRouter.isNativeEnvironment() || nativeEnv.isNativeApp;
+      if (!looksNative) {
           logger.debug('[Premium] Starting Stripe checkout...');
           
           // Clear loading after 10s max (Master Instruction requirement)
@@ -161,6 +164,13 @@ export default function Premium() {
           }
       }
 
+      if (looksNative && !PurchaseRouter.isNativeBilling()) {
+          clearTimeout(watchdog);
+          toast.error('In-app purchases are not available in this build. Please update the app.');
+          setCheckoutLoading(null);
+          return;
+      }
+
       // ---------------------------------------------------------
       // NATIVE FLOW (REVENUECAT)
       // Only runs if isNative === true
@@ -178,6 +188,7 @@ export default function Premium() {
           setUser(prev => prev ? { ...prev, isPremium: true, premiumSource: 'revenuecat' } : prev);
           const updatedUser = await base44.auth.me();
           setUser(updatedUser);
+          completed = true;
           window.location.reload();
       } else {
           clearTimeout(watchdog);
@@ -191,6 +202,10 @@ export default function Premium() {
        logger.error('Upgrade error:', error);
        toast.error(error.message || 'An unexpected error occurred.');
        setCheckoutLoading(null);
+    } finally {
+       if (!completed) {
+         setCheckoutLoading(null);
+       }
     }
   };
 
