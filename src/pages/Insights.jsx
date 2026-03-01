@@ -133,6 +133,14 @@ export default function Insights() {
     staleTime: 60_000
   });
 
+  const queryClient = useQueryClient();
+  const handlePTRRefresh = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['insights-sessions', user?.id] }),
+      queryClient.invalidateQueries({ queryKey: ['user-badges', user?.id] })
+    ]);
+  };
+
   const stats = React.useMemo(() => {
     if (!sessions || sessions.length === 0) return null;
 
