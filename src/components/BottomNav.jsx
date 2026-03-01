@@ -51,19 +51,23 @@ export default function BottomNav() {
         <div className="flex justify-around items-center h-16">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = location.pathname === createPageUrl(item.page);
+            const routes = tabRoutes[item.name] || [createPageUrl(item.page)];
+            const isActive = routes.includes(location.pathname);
+            const targetTo = (() => {
+              try { return localStorage.getItem('tab:lastPath:' + item.name) || routes[0]; } catch { return routes[0]; }
+            })();
             const showLock = item.premium && !isPremium;
             
             return (
               <Link
                 key={item.name}
-                to={createPageUrl(item.page)}
+                to={targetTo}
                 className={cn(
                   "flex flex-col items-center gap-1 transition-all duration-200 relative group no-select"
                 )}
               >
                 <div className={cn(
-                  "p-2 rounded-xl transition-all duration-300 relative",
+                  "w-11 h-11 inline-flex items-center justify-center rounded-xl transition-all duration-300 relative",
                   isActive ? "bg-[#25A55F]/20" : "hover:bg-gray-800"
                 )}>
                   <Icon 

@@ -1,14 +1,17 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Settings, HelpCircle } from "lucide-react";
+import { Settings, HelpCircle, ArrowLeft } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { logger } from "@/components/utils/logger";
 import "@/components/utils/purchaseRouter"; // Force load for diagnostics
 
 export default function Layout({ children, currentPageName }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const rootTabPages = new Set(['LogDose','BuzzResult','History','AICompanion','Predictor','Insights','ToleranceCoach']);
+  const isRootTab = rootTabPages.has(currentPageName);
   const [debugOverlay, setDebugOverlay] = React.useState('Debug: Init...');
 
   // Visual Diagnostics for Native Build (Base44 Support Request)
@@ -49,6 +52,29 @@ export default function Layout({ children, currentPageName }) {
     return () => clearInterval(interval);
   }, []);
   
+  // Sync dark mode with system preference
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mql = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+    const apply = () => {
+      if (!mql) return;
+      const root = document.documentElement;
+      if (mql.matches) {
+        root.classList.add('dark');
+      } else {
+        root.classList.remove('dark');
+      }
+    };
+    apply();
+    if (mql && mql.addEventListener) {
+      mql.addEventListener('change', apply);
+      return () => mql.removeEventListener('change', apply);
+    } else if (mql && mql.addListener) {
+      mql.addListener(apply);
+      return () => mql.removeListener(apply);
+    }
+  }, []);
+  
   // Service Worker Registration removed - not supported in Base44 platform
   // PWA functionality is handled by Base44's built-in manifest and meta tags
   
@@ -71,6 +97,34 @@ export default function Layout({ children, currentPageName }) {
     
     checkAuth();
   }, [currentPageName]);
+
+  // Save and restore scroll position per route (preserve across tab switches)
+  React.useEffect(() => {
+    const key = 'scroll:' + location.pathname;
+    const saved = sessionStorage.getItem(key);
+    if (saved) {
+      setTimeout(() => {
+        window.scrollTo(0, parseInt(saved, 10) || 0);
+      }, 0);
+    }
+  }, [location.pathname]);
+
+  React.useEffect(() => {
+    let ticking = false;
+    const onScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          try {
+            sessionStorage.setItem('scroll:' + location.pathname, String(window.scrollY || 0));
+          } catch {}
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [location.pathname]);
 
   // PWA State Refresh: Listen for when app regains focus after external navigation (like Stripe payment)
   React.useEffect(() => {
@@ -224,29 +278,39 @@ export default function Layout({ children, currentPageName }) {
       {/* Header with Logo and Settings */}
       <header className="fixed top-0 left-0 right-0 bg-[#0A0A0B]/95 backdrop-blur-xl border-b border-gray-800 z-40 no-select" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
         <div className="max-w-lg mx-auto px-6 py-3 flex items-center justify-between">
-          <Link to={createPageUrl('LogDose')} className="flex items-center gap-3 group">
-            <img 
-              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68e77f1fff1fec8a8ec261d8/a188a78e3_IMG_7818.png"
-              alt="Session Buddy"
-              className="w-10 h-10 object-contain transition-transform group-hover:scale-105"
-            />
-            <div>
-              <h1 className="text-lg font-bold text-white group-hover:text-[#25A55F] transition-colors">
-                Session Buddy
-              </h1>
-            </div>
-          </Link>
+          {isRootTab ? (
+            <Link to={createPageUrl('LogDose')} className="flex items-center gap-3 group">
+              <img 
+                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68e77f1fff1fec8a8ec261d8/a188a78e3_IMG_7818.png"
+                alt="Session Buddy"
+                className="w-10 h-10 object-contain transition-transform group-hover:scale-105"
+              />
+              <div>
+                <h1 className="text-lg font-bold text-white group-hover:text-[#25A55F] transition-colors">
+                  Session Buddy
+                </h1>
+              </div>
+            </Link>
+          ) : (
+            <button
+              onClick={() => navigate(-1)}
+              aria-label="Back"
+              className="h-11 w-11 flex items-center justify-center rounded-lg hover:bg-gray-800 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 text-gray-200" />
+            </button>
+          )}
           
           <div className="flex items-center gap-2">
             <Link
               to={createPageUrl('Help')}
-              className="p-2 rounded-lg hover:bg-gray-800 transition-colors"
+              className="h-11 w-11 flex items-center justify-center rounded-lg hover:bg-gray-800 transition-colors p-0"
             >
               <HelpCircle className="w-5 h-5 text-gray-400 hover:text-white transition-colors" />
             </Link>
             <Link
               to={createPageUrl('Settings')}
-              className="p-2 rounded-lg hover:bg-gray-800 transition-colors"
+              className="h-11 w-11 flex items-center justify-center rounded-lg hover:bg-gray-800 transition-colors p-0"
             >
               <Settings className="w-5 h-5 text-gray-400 hover:text-white transition-colors" />
             </Link>
