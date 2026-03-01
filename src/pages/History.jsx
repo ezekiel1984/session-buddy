@@ -14,6 +14,7 @@ import { getMethodDisplay } from '@/components/utils/methodLabels';
 import { calculateBuzzScore } from '@/components/utils/buzzCalculator';
 import { formatDistanceToNow } from 'date-fns';
 import OnboardingTooltip from '@/components/OnboardingTooltip';
+import PullToRefresh from '@/components/PullToRefresh';
 
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 
@@ -313,6 +314,10 @@ export default function History() {
     }
   };
 
+  const handlePTRRefresh = async () => {
+    await Promise.all([refetchSessions(), refetchUser()]);
+  };
+
   const isOverallLoading = isUserLoading || areSessionsLoading;
 
   const LoadingScreen = () => (
@@ -343,6 +348,7 @@ export default function History() {
 
   return (
     <div className="min-h-screen bg-[#0A0A0B] pb-24">
+      <PullToRefresh onRefresh={handlePTRRefresh}>
       <OnboardingTooltip
         pageName="History"
         title="📅 Dose History"
@@ -581,6 +587,7 @@ export default function History() {
         )}
       </div>
 
+      </PullToRefresh>
       <BottomNav />
 
       <Dialog open={showDeleteAllDialog} onOpenChange={setShowDeleteAllDialog}>

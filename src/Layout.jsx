@@ -207,7 +207,7 @@ export default function Layout({ children, currentPageName }) {
       `}</style>
       
       {/* Header with Logo and Settings */}
-      <header className="fixed top-0 left-0 right-0 bg-[#0A0A0B]/95 backdrop-blur-xl border-b border-gray-800 z-40">
+      <header className="fixed top-0 left-0 right-0 bg-[#0A0A0B]/95 backdrop-blur-xl border-b border-gray-800 z-40 no-select" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
         <div className="max-w-lg mx-auto px-6 py-3 flex items-center justify-between">
           <Link to={createPageUrl('LogDose')} className="flex items-center gap-3 group">
             <img 
@@ -242,11 +242,12 @@ export default function Layout({ children, currentPageName }) {
       <AnimatePresence mode="wait">
         <motion.div
           key={currentPageName}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2, ease: "easeInOut" }}
-          className="min-h-screen bg-[#0A0A0B] text-white pb-20 pt-16"
+          initial={{ x: 40, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          exit={{ x: -40, opacity: 0 }}
+          transition={{ duration: 0.25, ease: "easeInOut" }}
+          className="min-h-screen bg-[#0A0A0B] text-white"
+          style={{ paddingTop: '4rem', paddingBottom: 'calc(env(safe-area-inset-bottom) + 5rem)' }}
         >
           {children}
         </motion.div>

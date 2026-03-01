@@ -1,55 +1,104 @@
-import Landing from './pages/Landing';
-import Premium from './pages/Premium';
-import AICompanion from './pages/AICompanion';
-import BuzzResult from './pages/BuzzResult';
-import History from './pages/History';
-import Settings from './pages/Settings';
-import PaymentSuccess from './pages/PaymentSuccess';
-import TestTools from './pages/TestTools';
-import PrivacyPolicy from './pages/PrivacyPolicy';
-import TermsOfUse from './pages/TermsOfUse';
-import InstallApp from './pages/InstallApp';
-import Insights from './pages/Insights';
-import PortalReturn from './pages/PortalReturn';
+/**
+ * pages.config.js - Page routing configuration
+ * 
+ * This file is AUTO-GENERATED. Do not add imports or modify PAGES manually.
+ * Pages are auto-registered when you create files in the ./pages/ folder.
+ * 
+ * THE ONLY EDITABLE VALUE: mainPage
+ * This controls which page is the landing page (shown when users visit the app).
+ * 
+ * Example file structure:
+ * 
+ *   import HomePage from './pages/HomePage';
+ *   import Dashboard from './pages/Dashboard';
+ *   import Settings from './pages/Settings';
+ *   
+ *   export const PAGES = {
+ *       "HomePage": HomePage,
+ *       "Dashboard": Dashboard,
+ *       "Settings": Settings,
+ *   }
+ *   
+ *   export const pagesConfig = {
+ *       mainPage: "HomePage",
+ *       Pages: PAGES,
+ *   };
+ * 
+ * Example with Layout (wraps all pages):
+ *
+ *   import Home from './pages/Home';
+ *   import Settings from './pages/Settings';
+ *   import __Layout from './Layout.jsx';
+ *
+ *   export const PAGES = {
+ *       "Home": Home,
+ *       "Settings": Settings,
+ *   }
+ *
+ *   export const pagesConfig = {
+ *       mainPage: "Home",
+ *       Pages: PAGES,
+ *       Layout: __Layout,
+ *   };
+ *
+ * To change the main page from HomePage to Dashboard, use find_replace:
+ *   Old: mainPage: "HomePage",
+ *   New: mainPage: "Dashboard",
+ *
+ * The mainPage value must match a key in the PAGES object exactly.
+ */
 import AIChatView from './pages/AIChatView';
+import AICompanion from './pages/AICompanion';
 import Badges from './pages/Badges';
-import ShareView from './pages/ShareView';
-import LogDose from './pages/LogDose';
-import Predictor from './pages/Predictor';
-import ToleranceCoach from './pages/ToleranceCoach';
+import BuzzResult from './pages/BuzzResult';
 import Help from './pages/Help';
-import MyStrains from './pages/MyStrains';
-import Welcome from './pages/Welcome';
+import History from './pages/History';
 import Home from './pages/Home';
+import Insights from './pages/Insights';
+import InstallApp from './pages/InstallApp';
+import Landing from './pages/Landing';
+import LogDose from './pages/LogDose';
+import MyStrains from './pages/MyStrains';
+import PaymentSuccess from './pages/PaymentSuccess';
+import PortalReturn from './pages/PortalReturn';
+import Predictor from './pages/Predictor';
+import Premium from './pages/Premium';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 import SafetyInfo from './pages/SafetyInfo';
+import Settings from './pages/Settings';
+import ShareView from './pages/ShareView';
+import TermsOfUse from './pages/TermsOfUse';
+import TestTools from './pages/TestTools';
+import ToleranceCoach from './pages/ToleranceCoach';
+import Welcome from './pages/Welcome';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Landing": Landing,
-    "Premium": Premium,
-    "AICompanion": AICompanion,
-    "BuzzResult": BuzzResult,
-    "History": History,
-    "Settings": Settings,
-    "PaymentSuccess": PaymentSuccess,
-    "TestTools": TestTools,
-    "PrivacyPolicy": PrivacyPolicy,
-    "TermsOfUse": TermsOfUse,
-    "InstallApp": InstallApp,
-    "Insights": Insights,
-    "PortalReturn": PortalReturn,
     "AIChatView": AIChatView,
+    "AICompanion": AICompanion,
     "Badges": Badges,
-    "ShareView": ShareView,
-    "LogDose": LogDose,
-    "Predictor": Predictor,
-    "ToleranceCoach": ToleranceCoach,
+    "BuzzResult": BuzzResult,
     "Help": Help,
-    "MyStrains": MyStrains,
-    "Welcome": Welcome,
+    "History": History,
     "Home": Home,
+    "Insights": Insights,
+    "InstallApp": InstallApp,
+    "Landing": Landing,
+    "LogDose": LogDose,
+    "MyStrains": MyStrains,
+    "PaymentSuccess": PaymentSuccess,
+    "PortalReturn": PortalReturn,
+    "Predictor": Predictor,
+    "Premium": Premium,
+    "PrivacyPolicy": PrivacyPolicy,
     "SafetyInfo": SafetyInfo,
+    "Settings": Settings,
+    "ShareView": ShareView,
+    "TermsOfUse": TermsOfUse,
+    "TestTools": TestTools,
+    "ToleranceCoach": ToleranceCoach,
+    "Welcome": Welcome,
 }
 
 export const pagesConfig = {

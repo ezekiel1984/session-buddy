@@ -37,16 +37,16 @@ export default function BottomNav() {
 
   if (isPremium === null) {
     return (
-      <nav className="fixed bottom-0 left-0 right-0 bg-[#0A0A0B]/95 backdrop-blur-xl border-t border-gray-800 z-50">
-        <div className="max-w-lg mx-auto px-4">
-          <div className="flex justify-around items-center h-16" />
-        </div>
-      </nav>
+      <nav className="fixed bottom-0 left-0 right-0 bg-[#0A0A0B]/95 backdrop-blur-xl border-t border-gray-800 z-50 no-select" style={{ paddingBottom: 'env(safe-area-inset-bottom)', backgroundColor: '#0A0A0B' }}>
+            <div className="max-w-lg mx-auto px-4">
+              <div className="flex justify-around items-center h-16" />
+            </div>
+          </nav>
     );
   }
   
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-[#0A0A0B]/95 backdrop-blur-xl border-t border-gray-800 z-50">
+    <nav className="fixed bottom-0 left-0 right-0 bg-[#0A0A0B]/95 backdrop-blur-xl border-t border-gray-800 z-50 no-select" style={{ paddingBottom: 'env(safe-area-inset-bottom)', backgroundColor: '#0A0A0B' }}>
       <div className="max-w-lg mx-auto px-2">
         <div className="flex justify-around items-center h-16">
           {navItems.map((item) => {
@@ -59,7 +59,7 @@ export default function BottomNav() {
                 key={item.name}
                 to={createPageUrl(item.page)}
                 className={cn(
-                  "flex flex-col items-center gap-1 transition-all duration-200 relative group"
+                  "flex flex-col items-center gap-1 transition-all duration-200 relative group no-select"
                 )}
               >
                 <div className={cn(

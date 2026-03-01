@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { BarChart3, TrendingUp, Calendar, Flame, Clock, Zap, Share2, FlaskConical, Crown, Trophy } from 'lucide-react';
 import { calculateUserStats } from '@/components/utils/statsCalculator';
@@ -19,6 +18,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { BADGE_DEFINITIONS } from '@/components/utils/badgeChecker';
 import ConsumptionTrends from '@/components/insights/ConsumptionTrends';
 import OnboardingTooltip from '@/components/OnboardingTooltip';
+import PullToRefresh from '@/components/PullToRefresh';
 
 export default function Insights() {
   const navigate = useNavigate();
@@ -30,6 +30,14 @@ export default function Insights() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  const queryClient = useQueryClient();
+  const handlePTRRefresh = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['insights-sessions', user?.id] }),
+      queryClient.invalidateQueries({ queryKey: ['user-badges', user?.id] })
+    ]);
+  };
 
   useEffect(() => {
     const loadUser = async () => {
@@ -357,6 +365,7 @@ export default function Insights() {
   if (user && !user.isPremium) {
     return (
       <div className="min-h-screen bg-[#0A0A0B] pb-24">
+        <PullToRefresh onRefresh={handlePTRRefresh}>
         <OnboardingTooltip
           pageName="Insights"
           title="📊 Insights"
@@ -510,6 +519,7 @@ export default function Insights() {
 
   return (
     <div className="min-h-screen bg-[#0A0A0B] pb-24">
+      <PullToRefresh onRefresh={handlePTRRefresh}>
       <OnboardingTooltip
         pageName="Insights_Premium"
         title="📊 Your Insights"
@@ -895,6 +905,7 @@ export default function Insights() {
         )}
       </div>
 
+      </PullToRefresh>
       <BottomNav />
 
       {stats && sessions.length > 0 && (
