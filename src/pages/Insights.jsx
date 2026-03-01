@@ -507,11 +507,11 @@ export default function Insights() {
         </div>
         </PullToRefresh>
         <BottomNav />
-      </div>
-    );
-  }
+        </div>
+        );
+        }
 
-  return (
+        return (
     <div className="min-h-screen bg-[#0A0A0B] pb-24">
       <PullToRefresh onRefresh={handlePTRRefresh}>
       <OnboardingTooltip
