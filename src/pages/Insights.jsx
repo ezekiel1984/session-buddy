@@ -19,6 +19,7 @@ import { BADGE_DEFINITIONS } from '@/components/utils/badgeChecker';
 import ConsumptionTrends from '@/components/insights/ConsumptionTrends';
 import OnboardingTooltip from '@/components/OnboardingTooltip';
 import PullToRefresh from '@/components/PullToRefresh';
+import PullToRefresh from '@/components/PullToRefresh';
 
 export default function Insights() {
   const navigate = useNavigate();
@@ -30,6 +31,14 @@ export default function Insights() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  const queryClient = useQueryClient();
+  const handlePTRRefresh = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['insights-sessions', user?.id] }),
+      queryClient.invalidateQueries({ queryKey: ['user-badges', user?.id] })
+    ]);
+  };
 
   const queryClient = useQueryClient();
   const handlePTRRefresh = async () => {
@@ -905,6 +914,7 @@ export default function Insights() {
         )}
       </div>
 
+      </PullToRefresh>
       </PullToRefresh>
       <BottomNav />
 

@@ -74,6 +74,17 @@ export default function Layout({ children, currentPageName }) {
 
   // PWA State Refresh: Listen for when app regains focus after external navigation (like Stripe payment)
   React.useEffect(() => {
+    // Ensure viewport-fit=cover for iOS safe areas
+    try {
+      const meta = document.querySelector('meta[name="viewport"]');
+      if (meta) {
+        const content = meta.getAttribute('content') || '';
+        if (!/viewport-fit=cover/.test(content)) {
+          meta.setAttribute('content', content.replace(/\s*$/, '') + (content.includes(',') ? ' ' : ', ') + 'viewport-fit=cover');
+        }
+      }
+    } catch {}
+
     const handleVisibilityChange = () => {
       // When the app becomes visible again (e.g., returning from Stripe payment in external browser)
       if (document.visibilityState === 'visible') {
@@ -204,6 +215,10 @@ export default function Layout({ children, currentPageName }) {
         [role="menu"], [role="listbox"], [role="dialog"] {
           animation: none !important;
         }
+        
+        /* iOS native-like behavior */
+        body { overscroll-behavior-y: none; -webkit-overflow-scrolling: touch; }
+        .no-select { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
       `}</style>
       
       {/* Header with Logo and Settings */}

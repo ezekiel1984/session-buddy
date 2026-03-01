@@ -15,6 +15,7 @@ import { calculateBuzzScore } from '@/components/utils/buzzCalculator';
 import { formatDistanceToNow } from 'date-fns';
 import OnboardingTooltip from '@/components/OnboardingTooltip';
 import PullToRefresh from '@/components/PullToRefresh';
+import PullToRefresh from '@/components/PullToRefresh';
 
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 
@@ -318,6 +319,10 @@ export default function History() {
     await Promise.all([refetchSessions(), refetchUser()]);
   };
 
+  const handlePTRRefresh = async () => {
+    await Promise.all([refetchSessions(), refetchUser()]);
+  };
+
   const isOverallLoading = isUserLoading || areSessionsLoading;
 
   const LoadingScreen = () => (
@@ -587,6 +592,7 @@ export default function History() {
         )}
       </div>
 
+      </PullToRefresh>
       </PullToRefresh>
       <BottomNav />
 
