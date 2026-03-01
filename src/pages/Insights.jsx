@@ -364,7 +364,6 @@ export default function Insights() {
             </Button>
           </div>
         </div>
-        </PullToRefresh>
         <BottomNav />
       </div>
     );
