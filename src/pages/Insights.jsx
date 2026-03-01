@@ -31,14 +31,6 @@ export default function Insights() {
     window.scrollTo(0, 0);
   }, []);
 
-  const queryClient = useQueryClient();
-  const handlePTRRefresh = async () => {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['insights-sessions', user?.id] }),
-      queryClient.invalidateQueries({ queryKey: ['user-badges', user?.id] })
-    ]);
-  };
-
   useEffect(() => {
     const loadUser = async () => {
       try {
