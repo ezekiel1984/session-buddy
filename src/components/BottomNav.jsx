@@ -35,6 +35,24 @@ export default function BottomNav() {
     return baseItems;
   }, []);
 
+  const tabRoutes = React.useMemo(() => ({
+    Dose: [createPageUrl('LogDose')],
+    Buzz: [createPageUrl('BuzzResult')],
+    History: [createPageUrl('History')],
+    AI: [createPageUrl('AICompanion'), createPageUrl('AIChatView')],
+    Predictor: [createPageUrl('Predictor')],
+    Insights: [createPageUrl('Insights')],
+    Tolerance: [createPageUrl('ToleranceCoach')]
+  }), []);
+
+  useEffect(() => {
+    const currentPath = location.pathname;
+    const owningTab = Object.keys(tabRoutes).find(tab => (tabRoutes[tab] || []).includes(currentPath));
+    if (owningTab) {
+      try { localStorage.setItem('tab:lastPath:' + owningTab, currentPath); } catch {}
+    }
+  }, [location.pathname, tabRoutes]);
+
   if (isPremium === null) {
     return (
       <nav className="fixed bottom-0 left-0 right-0 bg-[#0A0A0B]/95 backdrop-blur-xl border-t border-gray-800 z-50 no-select" style={{ paddingBottom: 'env(safe-area-inset-bottom)', backgroundColor: '#0A0A0B' }}>
