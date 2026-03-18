@@ -1,11 +1,13 @@
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import VisualEditAgent from '@/lib/VisualEditAgent'
-import NavigationTracker from '@/lib/NavigationTracker'
 import { pagesConfig } from './pages.config'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
+import Premium from './pages/Premium';
+import Privacy from './pages/Privacy';
+import Terms from './pages/Terms';
+import Support from './pages/Support';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 
@@ -59,6 +61,41 @@ const AuthenticatedApp = () => {
           }
         />
       ))}
+
+      {/* Explicit routes required (pages.config may be empty) */}
+      <Route
+        path="/Premium"
+        element={
+          <LayoutWrapper currentPageName="Premium">
+            <Premium />
+          </LayoutWrapper>
+        }
+      />
+      <Route
+        path="/Privacy"
+        element={
+          <LayoutWrapper currentPageName="Privacy">
+            <Privacy />
+          </LayoutWrapper>
+        }
+      />
+      <Route
+        path="/Terms"
+        element={
+          <LayoutWrapper currentPageName="Terms">
+            <Terms />
+          </LayoutWrapper>
+        }
+      />
+      <Route
+        path="/Support"
+        element={
+          <LayoutWrapper currentPageName="Support">
+            <Support />
+          </LayoutWrapper>
+        }
+      />
+
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
@@ -71,11 +108,9 @@ function App() {
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
         <Router>
-          <NavigationTracker />
           <AuthenticatedApp />
         </Router>
         <Toaster />
-        <VisualEditAgent />
       </QueryClientProvider>
     </AuthProvider>
   )
