@@ -8,6 +8,7 @@ import Premium from './pages/Premium';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
 import Support from './pages/Support';
+import PremiumWeb from './pages/PremiumWeb';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 
@@ -92,6 +93,14 @@ const AuthenticatedApp = () => {
         element={
           <LayoutWrapper currentPageName="Support">
             <Support />
+          </LayoutWrapper>
+        }
+      />
+      <Route
+        path="/PremiumWeb"
+        element={
+          <LayoutWrapper currentPageName="PremiumWeb">
+            <PremiumWeb />
           </LayoutWrapper>
         }
       />
