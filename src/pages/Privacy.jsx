@@ -1,5 +1,7 @@
 import React from "react";
 
+import LegalFooter from "@/components/LegalFooter";
+
 export default function Privacy() {
   return (
     <div className="min-h-screen bg-[#0A0A0B] text-white pb-24">

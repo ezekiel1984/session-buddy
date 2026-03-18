@@ -2,6 +2,8 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Mail } from "lucide-react";
 
+import LegalFooter from "@/components/LegalFooter";
+
 export default function Support() {
   return (
     <div className="min-h-screen bg-[#0A0A0B] text-white pb-24">

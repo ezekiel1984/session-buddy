@@ -11,6 +11,8 @@ function isNativeApp() {
   return /Natively|BuildNatively/i.test(ua) || window.__NATIVELY__ === true;
 }
 
+import LegalFooter from "@/components/LegalFooter";
+
 export default function Premium() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
