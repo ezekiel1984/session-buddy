@@ -144,6 +144,21 @@ export default function Layout({ children, currentPageName }) {
         /* iOS native-like behavior */
         body { overscroll-behavior-y: none; -webkit-overflow-scrolling: touch; }
         .no-select { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+
+        /* Prevent text selection on interactive elements, keep text readable */
+        button, a, [role="tab"], nav, .no-select,
+        [data-radix-collection-item],
+        [role="menuitem"], [role="option"], [role="combobox"], [role="listbox"] {
+          -webkit-user-select: none;
+          user-select: none;
+          -webkit-touch-callout: none;
+        }
+
+        /* Keep text content, articles, and readouts selectable */
+        p, span, article, h1, h2, h3, h4, h5, h6, li, blockquote, textarea, input {
+          -webkit-user-select: text;
+          user-select: text;
+        }
       `}</style>
       
       {/* Header with Logo and Settings */}
