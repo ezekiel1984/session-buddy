@@ -5,6 +5,13 @@ import { base44 } from '@/api/base44Client';
 import { PenSquare, Zap, Crown, History, MessageCircle, FlaskConical, BarChart3, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+// All page names that belong to a bottom-nav tab (including sub-pages).
+// Used by Layout's KeepAlive to cache tab pages so their state persists.
+export const TAB_PAGES = new Set([
+  'LogDose', 'BuzzResult', 'History', 'AICompanion', 'AIChatView',
+  'Predictor', 'Insights', 'ToleranceCoach'
+]);
+
 export default function BottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
