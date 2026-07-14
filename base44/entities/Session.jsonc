@@ -1,0 +1,144 @@
+{
+  "name": "Session",
+  "type": "object",
+  "properties": {
+    "uid": {
+      "type": "string",
+      "description": "User ID who logged the session"
+    },
+    "method": {
+      "type": "string",
+      "enum": [
+        "vape_dry",
+        "vape_cart",
+        "smoke",
+        "dab",
+        "oil_sublingual",
+        "oil_ingested",
+        "edible"
+      ],
+      "description": "Consumption method"
+    },
+    "dosageMg": {
+      "type": "number",
+      "description": "Absorbed THC in milligrams (bioavailability-adjusted)"
+    },
+    "totalTHCMg": {
+      "type": "number",
+      "description": "Total THC before absorption (optional)"
+    },
+    "rawInput": {
+      "type": "object",
+      "description": "Raw user input data (amount, unit, %THC, etc.)"
+    },
+    "strain": {
+      "type": "string",
+      "description": "Cannabis strain name"
+    },
+    "startedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When session started"
+    },
+    "bodyWeightKg": {
+      "type": "number",
+      "description": "User body weight in kg at time of session"
+    },
+    "tolerance": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "description": "User tolerance level at time of session"
+    },
+    "buzzScore": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Calculated initial buzz intensity score"
+    },
+    "soberAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Estimated time when user will be sober"
+    },
+    "mood": {
+      "type": "string",
+      "enum": [
+        "relaxed",
+        "creative",
+        "focused",
+        "social",
+        "sleepy",
+        "energized",
+        "happy",
+        "calm"
+      ],
+      "description": "Optional mood tag for this session"
+    },
+    "stackedWith": {
+      "type": "string",
+      "description": "Session ID if this dose was stacked with another session"
+    },
+    "feedbackAdjustment": {
+      "type": "number",
+      "description": "User feedback on intensity (-2 to +2)"
+    }
+  },
+  "required": [
+    "uid",
+    "method",
+    "dosageMg",
+    "strain",
+    "startedAt",
+    "tolerance",
+    "buzzScore",
+    "soberAt",
+    "bodyWeightKg"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

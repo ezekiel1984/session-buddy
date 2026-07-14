@@ -470,11 +470,6 @@ export default function Help() {
               title="Understand Your Tolerance Index"
               description="Your Tolerance Index is based on actual logged sessions, not just your profile setting. It reflects real consumption patterns and decays naturally over time without use."
             />
-            <TipCard
-              icon={CheckCircle}
-              title="Install as an App"
-              description="Add Session Buddy to your home screen for quick access. Instructions in Settings."
-            />
           </div>
         </Section>
 

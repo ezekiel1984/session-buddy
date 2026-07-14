@@ -18,8 +18,7 @@ export default function Support() {
         <div className="mt-6 text-sm text-gray-400">
           <p>For billing:</p>
           <ul className="list-disc ml-5 mt-2 space-y-1">
-            <li>Web/PWA: Manage via your Stripe customer portal link from Settings or your receipt email.</li>
-            <li>Native apps: Manage subscriptions in your Apple App Store or Google Play account settings.</li>
+            <li>Manage subscriptions in your Apple App Store or Google Play account settings.</li>
           </ul>
         </div>
       </div>

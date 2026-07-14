@@ -1,0 +1,95 @@
+{
+  "name": "Share",
+  "type": "object",
+  "properties": {
+    "uid": {
+      "type": "string",
+      "description": "User ID who created the share"
+    },
+    "sessionId": {
+      "type": "string",
+      "description": "Reference to Session.id"
+    },
+    "shareId": {
+      "type": "string",
+      "description": "Unique public share ID"
+    },
+    "imageUrl": {
+      "type": "string",
+      "description": "Generated share image URL"
+    },
+    "isAnonymous": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether to hide user identity"
+    },
+    "buzzScore": {
+      "type": "number",
+      "description": "Buzz score at time of share"
+    },
+    "activeTHC": {
+      "type": "number",
+      "description": "Active THC in mg at time of share"
+    },
+    "method": {
+      "type": "string",
+      "description": "Consumption method"
+    },
+    "vibeText": {
+      "type": "string",
+      "description": "Auto-generated vibe description"
+    }
+  },
+  "required": [
+    "uid",
+    "sessionId",
+    "shareId",
+    "buzzScore",
+    "activeTHC",
+    "method"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,111 @@
+{
+  "name": "StrainProfile",
+  "type": "object",
+  "properties": {
+    "uid": {
+      "type": "string",
+      "description": "User ID who owns this strain profile"
+    },
+    "strainName": {
+      "type": "string",
+      "description": "Name of the strain/product"
+    },
+    "thcPercent": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "User-defined THC percentage for this strain"
+    },
+    "cbdPercent": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "User-defined CBD percentage for this strain"
+    },
+    "effectEnergy": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 5,
+      "description": "Average energy level rating (1-5)"
+    },
+    "effectFocus": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 5,
+      "description": "Average focus level rating (1-5)"
+    },
+    "effectRelaxation": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 5,
+      "description": "Average relaxation level rating (1-5)"
+    },
+    "effectCreativity": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 5,
+      "description": "Average creativity level rating (1-5)"
+    },
+    "effectSleep": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 5,
+      "description": "Average sleepiness level rating (1-5)"
+    },
+    "effectAnxiety": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 5,
+      "description": "Average anxiety reduction rating (1-5)"
+    },
+    "effectPainRelief": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 5,
+      "description": "Average pain relief rating (1-5)"
+    },
+    "effectEuphoria": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 5,
+      "description": "Average euphoria level rating (1-5)"
+    },
+    "totalRatings": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of times this strain has been rated for effects"
+    },
+    "totalSessions": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of sessions logged with this strain"
+    },
+    "notes": {
+      "type": "string",
+      "description": "User's personal notes about this strain"
+    },
+    "lastUsed": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last time this strain was used"
+    }
+  },
+  "required": [
+    "uid",
+    "strainName"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

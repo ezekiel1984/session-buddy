@@ -4,54 +4,13 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Settings, HelpCircle, ArrowLeft } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { logger } from "@/components/utils/logger";
-import "@/components/utils/purchaseRouter"; // Force load for diagnostics
+import "@/components/utils/purchaseRouter";
 
 export default function Layout({ children, currentPageName }) {
   const navigate = useNavigate();
   const location = useLocation();
   const rootTabPages = new Set(['LogDose','BuzzResult','History','AICompanion','Predictor','Insights','ToleranceCoach']);
   const isRootTab = rootTabPages.has(currentPageName);
-  const [debugOverlay, setDebugOverlay] = React.useState('Debug: Init...');
-
-  // Visual Diagnostics for Native Build (Base44 Support Request)
-  React.useEffect(() => {
-    const updateDebug = () => {
-        if (typeof window === 'undefined') return;
-        const routerLoaded = window.__PURCHASE_ROUTER_LOADED__ ? 'YES' : 'NO';
-        const natObj = window.natively ? 'YES' : 'NO';
-        const natPurch = window.NativelyPurchases ? (typeof window.NativelyPurchases === 'function' ? 'FN' : 'OBJ') : 'NO';
-        
-        // Manual bridge extraction logic matching the updated router
-        let bridgeStatus = 'NO';
-        try {
-            if (window.NativelyPurchases && typeof window.NativelyPurchases === 'function') {
-                 const testInst = new window.NativelyPurchases();
-                 if (testInst) bridgeStatus = 'YES(CTOR)';
-            } else if (window.natively && window.natively.purchases) {
-                 bridgeStatus = 'YES(MOD)';
-            }
-        } catch(e) { bridgeStatus = 'ERR'; }
-
-        const status = window.__PURCHASE_STATUS__ || '-';
-        
-        // Introspect keys if bridge exists
-        let keys = '';
-        if (window.NativelyPurchases && typeof window.NativelyPurchases === 'function') {
-            try {
-                const i = new window.NativelyPurchases();
-                keys = Object.keys(i).filter(k => typeof i[k] === 'function').join(',');
-            } catch(e) {}
-        }
-        
-        setDebugOverlay(`R:${routerLoaded} | B:${bridgeStatus} | S:${status} | FNs:${keys.substring(0, 30)}`);
-        };
-
-        updateDebug();
-    const interval = setInterval(updateDebug, 1000);
-    return () => clearInterval(interval);
-  }, []);
-  
   // Sync dark mode with system preference
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -74,9 +33,6 @@ export default function Layout({ children, currentPageName }) {
       return () => mql.removeListener(apply);
     }
   }, []);
-  
-  // Service Worker Registration removed - not supported in Base44 platform
-  // PWA functionality is handled by Base44's built-in manifest and meta tags
   
   // Check authentication for protected pages - MUST be before any returns
   React.useEffect(() => {
@@ -126,109 +82,24 @@ export default function Layout({ children, currentPageName }) {
     return () => window.removeEventListener('scroll', onScroll);
   }, [location.pathname]);
 
-  // PWA State Refresh: Listen for when app regains focus after external navigation (like Stripe payment)
+  // Inject Natively SDK when running inside a native wrapper (for in-app purchases)
   React.useEffect(() => {
-    // Ensure viewport-fit=cover for iOS safe areas
-    try {
-      const meta = document.querySelector('meta[name="viewport"]');
-      if (meta) {
-        const content = meta.getAttribute('content') || '';
-        if (!/viewport-fit=cover/.test(content)) {
-          meta.setAttribute('content', content.replace(/\s*$/, '') + (content.includes(',') ? ' ' : ', ') + 'viewport-fit=cover');
-        }
-      }
-    } catch {}
+    if (typeof window === 'undefined') return;
+    if (document.getElementById('natively-sdk')) return;
 
-    const handleVisibilityChange = () => {
-      // When the app becomes visible again (e.g., returning from Stripe payment in external browser)
-      if (document.visibilityState === 'visible') {
-        logger.debug('[Layout] App regained visibility');
-        
-        // Check if we're returning from a successful payment
-        const paymentSuccessPending = sessionStorage.getItem('payment_success_pending_refresh');
-        
-        if (paymentSuccessPending === 'true') {
-          logger.debug('[Layout] Payment success detected, forcing full PWA refresh');
-          // Clear the flag
-          sessionStorage.removeItem('payment_success_pending_refresh');
-          // Force a full page reload to ensure PWA state is completely refreshed
-          window.location.reload();
-        }
-      }
-    };
+    const ua = navigator.userAgent || '';
+    const looksNative = /Natively|BuildNatively/i.test(ua) || window.__NATIVELY__ === true;
 
-    const handleFocus = () => {
-      // Additional handler for window focus events
-      logger.debug('[Layout] Window regained focus');
-      
-      // Check if we're returning from a successful payment
-      const paymentSuccessPending = sessionStorage.getItem('payment_success_pending_refresh');
-      
-      if (paymentSuccessPending === 'true') {
-        logger.debug('[Layout] Payment success detected on focus, forcing full PWA refresh');
-        // Clear the flag
-        sessionStorage.removeItem('payment_success_pending_refresh');
-        // Small delay to ensure the browser context has fully restored
-        setTimeout(() => {
-          window.location.reload();
-        }, 100);
-      }
-    };
-
-    // Inject Natively SDK ONLY if missing AND we look like a native wrapper
-    const loadNativelySDK = () => {
-      if (typeof window === 'undefined') return;
-      // Prevent multiple injections
-      if (document.getElementById('natively-sdk')) return;
-
-      // Strict check: Only inject on actual native wrapper to avoid Web/PWA issues
-      const ua = navigator.userAgent || '';
-      // Native = running inside BuildNatively wrapper only
-      const looksNative = /Natively|BuildNatively/i.test(ua) || window.__NATIVELY__ === true;
-
-      if (looksNative) {
-          logger.debug('[Layout] Native environment detected, injecting SDK...');
-          const script = document.createElement('script');
-          script.id = 'natively-sdk';
-          script.src = 'https://cdn.jsdelivr.net/npm/natively@2.22.0/natively-frontend.min.js';
-          script.async = true;
-          script.onload = () => {
-             logger.debug('[Layout] Natively SDK loaded dynamically');
-             if (window.natively) window.natively.setDebug(false);
-          };
-          document.head.appendChild(script);
-      }
-    };
-    loadNativelySDK();
-
-    // Robust PWA detection
-    const checkPWA = () => {
-      try {
-        if (typeof window === 'undefined') return false;
-        
-        const isStandalone = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
-        const isIOSStandalone = window.navigator && window.navigator.standalone === true;
-        
-        return isStandalone || isIOSStandalone;
-      } catch (e) {
-        return false;
-      }
-    };
-
-    const isPWA = checkPWA();
-    
-    if (isPWA) {
-      logger.debug('[Layout] PWA detected, installing visibility listeners');
-      document.addEventListener('visibilitychange', handleVisibilityChange);
-      window.addEventListener('focus', handleFocus);
+    if (looksNative) {
+      const script = document.createElement('script');
+      script.id = 'natively-sdk';
+      script.src = 'https://cdn.jsdelivr.net/npm/natively@2.22.0/natively-frontend.min.js';
+      script.async = true;
+      script.onload = () => {
+        if (window.natively) window.natively.setDebug(false);
+      };
+      document.head.appendChild(script);
     }
-
-    return () => {
-      if (isPWA) {
-        document.removeEventListener('visibilitychange', handleVisibilityChange);
-        window.removeEventListener('focus', handleFocus);
-      }
-    };
   }, []);
   
   // No layout wrapper for landing page, share view, and welcome page

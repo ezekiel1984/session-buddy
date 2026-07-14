@@ -1,0 +1,85 @@
+{
+  "name": "Chat",
+  "type": "object",
+  "properties": {
+    "uid": {
+      "type": "string",
+      "description": "User ID who owns this chat"
+    },
+    "title": {
+      "type": "string",
+      "default": "New Chat",
+      "description": "Chat title"
+    },
+    "toneMode": {
+      "type": "string",
+      "enum": [
+        "zen",
+        "rick",
+        "lofi",
+        "clinical",
+        "dude"
+      ],
+      "default": "zen",
+      "description": "AI companion tone for this chat"
+    },
+    "isActive": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this is the currently active chat"
+    },
+    "summary": {
+      "type": "string",
+      "description": "AI-generated summary of the conversation"
+    }
+  },
+  "required": [
+    "uid",
+    "title",
+    "toneMode"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

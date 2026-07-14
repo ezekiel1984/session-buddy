@@ -1,0 +1,19 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "enum": [
+        "admin",
+        "user"
+      ],
+      "default": "user"
+    },
+    "isPremium": {
+      "type": "boolean",
+      "default": false,
+      "description": "Premium entitlement flag (managed via native in-app purchases)"
+    }
+  }
+}

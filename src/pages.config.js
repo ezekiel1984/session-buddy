@@ -55,12 +55,9 @@ import Help from './pages/Help';
 import History from './pages/History';
 import Home from './pages/Home';
 import Insights from './pages/Insights';
-import InstallApp from './pages/InstallApp';
 import Landing from './pages/Landing';
 import LogDose from './pages/LogDose';
 import MyStrains from './pages/MyStrains';
-import PaymentSuccess from './pages/PaymentSuccess';
-import PortalReturn from './pages/PortalReturn';
 import Predictor from './pages/Predictor';
 import Premium from './pages/Premium';
 import PrivacyPolicy from './pages/PrivacyPolicy';
@@ -83,12 +80,9 @@ export const PAGES = {
     "History": History,
     "Home": Home,
     "Insights": Insights,
-    "InstallApp": InstallApp,
     "Landing": Landing,
     "LogDose": LogDose,
     "MyStrains": MyStrains,
-    "PaymentSuccess": PaymentSuccess,
-    "PortalReturn": PortalReturn,
     "Predictor": Predictor,
     "Premium": Premium,
     "PrivacyPolicy": PrivacyPolicy,

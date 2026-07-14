@@ -14,8 +14,7 @@ export default function Terms() {
         </p>
         <h2>Subscriptions</h2>
         <ul>
-          <li>Web/PWA: Managed by Stripe. Renewing subscription; cancel anytime from your account.</li>
-          <li>Native apps: Managed via Apple App Store or Google Play. Follow store policies for cancellation/refunds.</li>
+          <li>Managed via Apple App Store or Google Play. Follow store policies for cancellation/refunds.</li>
         </ul>
         <h2>User Content</h2>
         <p>You are responsible for content you input and must comply with applicable laws.</p>

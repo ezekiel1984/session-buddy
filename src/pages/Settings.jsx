@@ -22,7 +22,6 @@ import BottomNav from '@/components/BottomNav';
 import StatsCard from '@/components/StatsCard';
 import AgeGate from '@/components/AgeGate';
 import { useNativelyEnvironment } from '@/components/utils/natively';
-import InstallAppModal from '@/components/InstallAppModal';
 import LoadingScreen from '@/components/LoadingScreen';
 import { useQuery } from '@tanstack/react-query';
 import { logger } from '@/components/utils/logger';
@@ -62,12 +61,10 @@ export default function Settings() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showAgeGate, setShowAgeGate] = useState(false);
-  const [showInstallModal, setShowInstallModal] = useState(false);
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [saving, setSaving] = useState(false);
   const [clearing, setClearing] = useState(false);
   const [exportingData, setExportingData] = useState(false);
-  const [managingSubscription, setManagingSubscription] = useState(false);
 
   // Delete Account states
   const [deleteConfirm, setDeleteConfirm] = useState("");
@@ -128,8 +125,7 @@ export default function Settings() {
 
         logger.debug('[Settings] Loaded user:', {
           id: currentUser.id,
-          isPremium: currentUser.isPremium,
-          stripeCustomerId: currentUser.stripeCustomerId
+          isPremium: currentUser.isPremium
         });
 
         if (!currentUser.ageConfirmed) {
@@ -173,39 +169,6 @@ export default function Settings() {
     };
     loadUser();
   }, []);
-
-  // Force refresh user data when returning to page (detect if we came back from Stripe)
-  useEffect(() => {
-    const handleVisibilityChange = async () => {
-      if (document.visibilityState === 'visible' && user) {
-        logger.debug('[Settings] Page became visible, refreshing user data');
-        try {
-          const currentUser = await base44.auth.me();
-          logger.debug('[Settings] Refreshed user premium status:', currentUser.isPremium);
-          setUser(currentUser);
-          // Re-initialize dynamic states as well
-          setWeightInput(currentUser.weightKg ? 
-            (currentUser.units === 'imperial' ? 
-              (currentUser.weightKg * 2.20462).toFixed(1) : 
-              currentUser.weightKg.toString()) : '');
-          setMetabolismAdj(currentUser.metabolismAdj !== undefined ? currentUser.metabolismAdj : 0);
-        } catch (error) {
-          logger.error('[Settings] Error refreshing user:', error);
-          const errorMessage = error?.message || String(error);
-          const isAuthError = errorMessage.toLowerCase().includes('logged in') ||
-                            errorMessage.toLowerCase().includes('unauthorized');
-          if (isAuthError) {
-              await base44.auth.redirectToLogin(window.location.pathname);
-          } else {
-              toast.error('Failed to refresh user data.');
-          }
-        }
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [user]);
 
   const handleSaveProfile = async () => {
     setSaving(true);
@@ -340,61 +303,7 @@ export default function Settings() {
       navigate(createPageUrl('Premium'));
       return;
     }
-
-    // --- NATIVE IAP MANAGEMENT ---
-    if (isNativeApp) {
-        // Native apps typically manage subscriptions via the App Store / Play Store settings
-        // Natively might provide a helper to open this, or we just instruct the user
-        toast.info('Please manage your subscription via your device Settings (Apple ID / Google Play).', { duration: 5000 });
-        
-        // Try to deep link if Natively supports it (optional enhancement)
-        // window.location.href = 'https://apps.apple.com/account/subscriptions'; // iOS generic
-        return;
-    }
-
-    // --- WEB/STRIPE MANAGEMENT ---
-    setManagingSubscription(true);
-    try {
-      logger.debug('[Settings] Opening customer portal for user:', user.id);
-      const response = await base44.functions.invoke('openCustomerPortal');
-      
-      if (response.data?.error) {
-        logger.error('[Settings] Portal error:', response.data);
-        
-        if (response.data.requiresResubscribe) {
-          toast.error('Your test subscription needs to be upgraded. Redirecting to Premium...', { duration: 4000 });
-          setTimeout(() => {
-            navigate(createPageUrl('Premium'));
-          }, 2000);
-          return;
-        }
-        
-        throw new Error(response.data.error);
-      }
-
-      if (response.data?.url) {
-        logger.debug('[Settings] Redirecting to portal:', response.data.url);
-        window.location.href = response.data.url;
-      } else {
-        throw new Error('No portal URL returned');
-      }
-    } catch (error) {
-      logger.error('[Settings] Error opening portal:', error);
-      
-      // Check if it's the test subscription error
-      if (error.response?.data?.requiresResubscribe) {
-        toast.error('Your test subscription needs to be upgraded. Redirecting to Premium...', { duration: 4000 });
-        setTimeout(() => {
-          navigate(createPageUrl('Premium'));
-        }, 2000);
-        setManagingSubscription(false);
-        return;
-      }
-      
-      const errorMsg = error.response?.data?.error || error.message || 'Failed to open subscription management';
-      toast.error(errorMsg);
-      setManagingSubscription(false);
-    }
+    toast.info('Manage your subscription in your Apple App Store or Google Play account settings.', { duration: 5000 });
   };
 
   const handleExportData = async () => {
@@ -763,39 +672,18 @@ export default function Settings() {
                   <span className="text-[#25A55F] font-medium">Active</span>
                 </div>
                 
-                {isNativeApp ? (
-                  <a href="https://apps.apple.com/account/subscriptions" target="_blank" rel="noreferrer">
-                    <Button
-                      variant="outline"
-                      className="w-full border-gray-800 bg-[#0A0A0B] text-gray-300 hover:text-white hover:bg-gray-800"
-                    >
-                      <ExternalLink className="mr-2 h-4 w-4" />
-                      Manage on Apple Subscriptions
-                    </Button>
-                  </a>
-                ) : (
+                <a href="https://apps.apple.com/account/subscriptions" target="_blank" rel="noreferrer">
                   <Button
-                    onClick={handleManageSubscription}
-                    disabled={managingSubscription}
                     variant="outline"
                     className="w-full border-gray-800 bg-[#0A0A0B] text-gray-300 hover:text-white hover:bg-gray-800"
                   >
-                    {managingSubscription ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Opening...
-                      </>
-                    ) : (
-                      <>
-                        <ExternalLink className="mr-2 h-4 w-4" />
-                        Manage Subscription
-                      </>
-                    )}
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    Manage Subscription
                   </Button>
-                )}
+                </a>
                 
                 <p className="text-xs text-gray-500 text-center">
-                  {isNativeApp ? 'Manage your subscription in your Apple ID settings' : 'Opens Stripe portal to manage billing and cancel subscription'}
+                  Manage your subscription in your Apple App Store or Google Play settings
                 </p>
               </div>
             </div>
@@ -925,15 +813,6 @@ export default function Settings() {
                   Help & Support
                 </Button>
               </Link>
-              <Button
-                onClick={() => setShowInstallModal(true)}
-                variant="outline"
-                className="w-full border-gray-700 text-white hover:bg-gray-800 justify-start bg-[#0A0A0B]"
-              >
-                <Smartphone className="mr-2 h-4 w-4" />
-                Install to Home Screen
-              </Button>
-
               <a href="mailto:support@verdelabs.com.au">
                 <Button
                   variant="outline"
@@ -974,9 +853,6 @@ export default function Settings() {
       </div>
 
       <BottomNav />
-
-      {/* Install App Modal */}
-      <InstallAppModal isOpen={showInstallModal} onClose={() => setShowInstallModal(false)} />
 
       {/* Clear History Dialog */}
       <AlertDialog open={showClearDialog} onOpenChange={setShowClearDialog}>

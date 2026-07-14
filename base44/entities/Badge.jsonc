@@ -1,0 +1,82 @@
+{
+  "name": "Badge",
+  "type": "object",
+  "properties": {
+    "uid": {
+      "type": "string",
+      "description": "User ID who earned this badge"
+    },
+    "badgeId": {
+      "type": "string",
+      "description": "Unique identifier for the badge type"
+    },
+    "earnedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the badge was earned"
+    },
+    "seen": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the user has seen the celebration"
+    }
+  },
+  "required": [
+    "uid",
+    "badgeId",
+    "earnedAt"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

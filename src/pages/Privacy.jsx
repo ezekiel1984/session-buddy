@@ -25,7 +25,7 @@ export default function Privacy() {
         <h2>Sharing</h2>
         <p>We do not sell your data. We use trusted processors (hosting, payments) as needed.</p>
         <h2>Your Choices</h2>
-        <p>You can delete your data by contacting support. For subscription billing, manage via Stripe (web) or your app store (native).</p>
+        <p>You can delete your data by contacting support. For subscription billing, manage via your Apple App Store or Google Play account settings.</p>
         <p className="text-xs opacity-70">This content is informational and not legal advice.</p>
       </div>
     </div>
