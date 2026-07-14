@@ -9,22 +9,40 @@ export default function PullToRefresh({ onRefresh, children }) {
 
   React.useEffect(() => {
     const onTouchStart = (e) => {
-      if (window.scrollY > 0 || refreshing) return;
+      // Only initiate pull when scrolled to top
+      if (window.scrollY > 0 || refreshing) {
+        pullingRef.current = false;
+        return;
+      }
       startYRef.current = e.touches[0].clientY;
       pullingRef.current = true;
     };
 
     const onTouchMove = (e) => {
       if (!pullingRef.current || refreshing) return;
+      // Re-check scrollY on every move — if the user scrolled up mid-gesture, bail out
+      if (window.scrollY > 0) {
+        pullingRef.current = false;
+        if (distance > 0) setDistance(0);
+        return;
+      }
       const dy = e.touches[0].clientY - startYRef.current;
       if (dy > 0) {
+        // Only preventDefault when at the very top AND pulling down — preserves normal scroll elsewhere
         e.preventDefault();
         setDistance(Math.min(120, dy));
+      } else if (distance > 0) {
+        // User started scrolling up — reset and let native scroll take over
+        setDistance(0);
+        pullingRef.current = false;
       }
     };
 
     const onTouchEnd = async () => {
-      if (!pullingRef.current) return;
+      if (!pullingRef.current) {
+        setDistance(0);
+        return;
+      }
       pullingRef.current = false;
       const threshold = 70;
       if (distance >= threshold && typeof onRefresh === 'function') {

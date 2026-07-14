@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { PenSquare, Zap, Crown, History, MessageCircle, FlaskConical, BarChart3, Sparkles } from 'lucide-react';
@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 
 export default function BottomNav() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isPremium, setIsPremium] = useState(null);
   
   useEffect(() => {
@@ -53,20 +54,31 @@ export default function BottomNav() {
     }
   }, [location.pathname, tabRoutes]);
 
+  // Reset-to-root: tapping an already-active tab clears saved path and navigates to base route
+  const handleTabClick = (e, item) => {
+    const routes = tabRoutes[item.name] || [createPageUrl(item.page)];
+    const isActive = routes.includes(location.pathname);
+    if (isActive) {
+      e.preventDefault();
+      try { localStorage.removeItem('tab:lastPath:' + item.name); } catch {}
+      navigate(routes[0]);
+    }
+  };
+
   if (isPremium === null) {
     return (
-      <nav className="fixed bottom-0 left-0 right-0 bg-[#0A0A0B]/95 backdrop-blur-xl border-t border-gray-800 z-50 no-select" style={{ paddingBottom: 'env(safe-area-inset-bottom)', backgroundColor: '#0A0A0B' }}>
+      <nav className="fixed bottom-0 left-0 right-0 bg-[#0A0A0B]/95 backdrop-blur-xl border-t border-gray-800 z-50 no-select pb-[env(safe-area-inset-bottom)]" style={{ backgroundColor: '#0A0A0B' }}>
             <div className="max-w-lg mx-auto px-4">
-              <div className="flex justify-around items-center h-16" />
+              <div className="flex justify-around items-center h-20" />
             </div>
           </nav>
     );
   }
   
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-[#0A0A0B]/95 backdrop-blur-xl border-t border-gray-800 z-50 no-select" style={{ paddingBottom: 'env(safe-area-inset-bottom)', backgroundColor: '#0A0A0B' }}>
+    <nav className="fixed bottom-0 left-0 right-0 bg-[#0A0A0B]/95 backdrop-blur-xl border-t border-gray-800 z-50 no-select pb-[env(safe-area-inset-bottom)]" style={{ backgroundColor: '#0A0A0B' }}>
       <div className="max-w-lg mx-auto px-2">
-        <div className="flex justify-around items-center h-16">
+        <div className="flex justify-around items-center h-20">
           {navItems.map((item) => {
             const Icon = item.icon;
             const routes = tabRoutes[item.name] || [createPageUrl(item.page)];
@@ -80,6 +92,7 @@ export default function BottomNav() {
               <Link
                 key={item.name}
                 to={targetTo}
+                onClick={(e) => handleTabClick(e, item)}
                 className={cn(
                   "flex flex-col items-center gap-1 transition-all duration-200 relative group no-select"
                 )}
