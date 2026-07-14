@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { Sparkles, TrendingUp, Shield, ArrowRight, Download, Share, BarChart3, Trophy, MessageCircle, FlaskConical, Brain, Zap, Star, Lock, HelpCircle, Mail } from 'lucide-react';
+import { Sparkles, TrendingUp, Shield, ArrowRight, BarChart3, Trophy, MessageCircle, FlaskConical, Brain, Zap, Star, Lock, HelpCircle, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { cn } from '@/lib/utils';
@@ -197,36 +197,6 @@ export default function Landing() {
             description="Deep analytics with blood THC graphs, weekly vibe reports, method breakdowns, and shareable stats cards"
             premium
           />
-        </div>
-
-        {/* Install Instructions */}
-        <div className="mb-12 bg-[#141416]/50 backdrop-blur-sm border border-gray-800 rounded-2xl p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 rounded-xl bg-[#25A55F]/10">
-              <Download className="w-5 h-5 text-[#25A55F]" />
-            </div>
-            <h3 className="text-white font-semibold text-lg">Install as App</h3>
-          </div>
-          
-          <div className="space-y-4 text-sm text-gray-400">
-            <div>
-              <p className="text-white font-medium mb-2">📱 iPhone/iPad:</p>
-              <ol className="list-decimal ml-5 space-y-1">
-                <li>Tap the <Share className="inline w-4 h-4" /> Share button in Safari</li>
-                <li>Scroll down and tap "Add to Home Screen"</li>
-                <li>Tap "Add" to confirm</li>
-              </ol>
-            </div>
-            
-            <div>
-              <p className="text-white font-medium mb-2">🤖 Android:</p>
-              <ol className="list-decimal ml-5 space-y-1">
-                <li>Tap the ⋮ menu in Chrome</li>
-                <li>Tap "Add to Home screen" or "Install app"</li>
-                <li>Tap "Add" or "Install" to confirm</li>
-              </ol>
-            </div>
-          </div>
         </div>
 
         {/* Why Session Buddy */}
