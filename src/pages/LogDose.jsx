@@ -34,6 +34,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import StrainPotencyInput from '@/components/StrainPotencyInput';
 import OnboardingTooltip from '@/components/OnboardingTooltip';
+import PullToRefresh from '@/components/PullToRefresh';
 import { logger } from '@/components/utils/logger';
 
 export default function LogDose() {
@@ -556,24 +557,17 @@ export default function LogDose() {
 
       logger.debug('[LogDose] Creating session with data:', JSON.stringify(sessionData, null, 2));
 
-      let session;
-      try {
-        session = await base44.entities.Session.create(sessionData);
-        logger.debug('[LogDose] ✅ Session created! Response:', JSON.stringify(session, null, 2));
-      } catch (createError) {
-        logger.error('[LogDose] ❌ ERROR creating session:', createError);
-        throw new Error(`Failed to create session: ${createError.message}`);
-      }
+      // Optimistic UI: store session in sessionStorage and navigate immediately
+      const optimisticSession = { ...sessionData, id: 'temp_' + Date.now(), created_date: new Date().toISOString() };
+      sessionStorage.setItem('latestSession', JSON.stringify(optimisticSession));
 
-      if (!session?.id) {
-        logger.error('[LogDose] ❌ Session created but no ID returned:', session);
-        throw new Error('Session created but no ID returned');
-      }
+      toast.success('Dose logged successfully! 🔥');
+      navigate(createPageUrl('BuzzResult'));
 
-      logger.debug('[LogDose] ✅ Session created successfully! ID:', session.id);
-
-      try {
-        await base44.auth.updateMe({
+      // Fire create in the background (non-blocking)
+      base44.entities.Session.create(sessionData).then((session) => {
+        logger.debug('[LogDose] ✅ Session created in background! ID:', session?.id);
+        base44.auth.updateMe({
           advancedSettings: {
             vd_thcPercent: formData.vd_thcPercent,
             smoke_thcPercent: formData.smoke_thcPercent,
@@ -584,22 +578,19 @@ export default function LogDose() {
             oil_mgPerMl: formData.oil_mgPerMl,
             oil_dropSize: formData.oil_dropSize
           }
+        }).catch((settingsError) => {
+          logger.warn('[LogDose] Failed to save settings:', settingsError);
         });
-      } catch (settingsError) {
-        logger.warn('[LogDose] Failed to save settings:', settingsError);
-      }
-
-      trackEvent(AnalyticsEvents.SESSION_LOGGED, {
-        method: formData.method,
-        dosageMg: dosageMg,
-        quickSelect: formData.quickSelect,
-        isStacked: !!(finalStackedWith)
+        trackEvent(AnalyticsEvents.SESSION_LOGGED, {
+          method: formData.method,
+          dosageMg: dosageMg,
+          quickSelect: formData.quickSelect,
+          isStacked: !!(finalStackedWith)
+        });
+      }).catch((error) => {
+        logger.error('[LogDose] ❌ Background create failed:', error);
+        toast.error(`Failed to save dose: ${error?.message || 'Unknown error'}. Please try again.`);
       });
-
-      toast.success('Dose logged successfully! 🔥');
-
-      logger.debug('[LogDose] Navigating to BuzzResult');
-      navigate(createPageUrl('BuzzResult'));
 
     } catch (error) {
       logger.error('[LogDose] ❌❌❌ CRITICAL ERROR:', error);
@@ -861,6 +852,25 @@ export default function LogDose() {
     }
   };
 
+  const handleRefresh = async () => {
+    try {
+      const currentUser = await base44.auth.me();
+      setUser(currentUser);
+      if (currentUser?.id) {
+        const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000);
+        const recentSessions = await base44.entities.Session.filter(
+          { uid: currentUser.id },
+          '-created_date',
+          10
+        );
+        const activeSession = recentSessions.find(s => new Date(s.startedAt) >= fourHoursAgo);
+        setRecentSession(activeSession || null);
+      }
+    } catch (error) {
+      logger.error('[LogDose] Error refreshing:', error);
+    }
+  };
+
   if (authLoading) {
     return <LoadingScreen />;
   }
@@ -946,6 +956,7 @@ export default function LogDose() {
         <div className="absolute bottom-1/4 -right-1/4 w-96 h-96 bg-[#25A55F]/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
       </div>
 
+      <PullToRefresh onRefresh={handleRefresh}>
       <div className="relative z-10 max-w-lg mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold text-white flex items-center gap-2">
@@ -1667,6 +1678,7 @@ export default function LogDose() {
           </Button>
         </form>
       </div>
+      </PullToRefresh>
 
       <AlertDialog open={showStackDialog} onOpenChange={setShowStackDialog}>
         <AlertDialogContent className="bg-[#141416] border-gray-800">

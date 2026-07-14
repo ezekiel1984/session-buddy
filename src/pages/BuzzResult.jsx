@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
@@ -26,6 +26,7 @@ import StrainEffectRating from '@/components/StrainEffectRating';
 import BadgeCelebration from '@/components/BadgeCelebration';
 import { checkBadges, awardBadge } from '@/components/utils/badgeChecker';
 import OnboardingTooltip from '@/components/OnboardingTooltip';
+import PullToRefresh from '@/components/PullToRefresh';
 
 export default function BuzzResult() {
   const navigate = useNavigate();
@@ -64,8 +65,7 @@ export default function BuzzResult() {
     }
   }, [mainSession, showEffectRating, user]); // Added showEffectRating and user to dependencies
 
-  useEffect(() => {
-    const loadSessions = async () => {
+  const loadSessions = useCallback(async (skipDelay = false) => {
       try {
         logger.debug('[BuzzResult] Starting to load sessions');
 
@@ -89,7 +89,9 @@ export default function BuzzResult() {
         trackEvent(AnalyticsEvents.VIEW_BUZZ_RESULT);
 
         logger.debug('[BuzzResult] Waiting 4 seconds for database...');
-        await new Promise(resolve => setTimeout(resolve, 4000));
+        if (!skipDelay) {
+          await new Promise(resolve => setTimeout(resolve, 4000));
+        }
 
         logger.debug('[BuzzResult] Fetching sessions for user:', currentUser.id);
 
@@ -259,10 +261,15 @@ export default function BuzzResult() {
           setLoading(false);
         }
       }
-    };
+  });
 
+  useEffect(() => {
     loadSessions();
-  }, []);
+  }, [loadSessions]);
+
+  const handleRefresh = async () => {
+    await loadSessions(true);
+  };
 
   // Effect to set the main session and its mood for tagging
   useEffect(() => {
@@ -611,6 +618,7 @@ NO medical advice. NO dosing recommendations. Focus on awareness and mindfulness
 
   return (
     <div className="min-h-screen bg-[#0A0A0B] pb-24">
+    <PullToRefresh onRefresh={handleRefresh}>
       <OnboardingTooltip
         pageName="BuzzResult"
         title="🔥 Your Buzz Level"
@@ -929,6 +937,7 @@ NO medical advice. NO dosing recommendations. Focus on awareness and mindfulness
           </div>
         ) : null}
       </div>
+    </PullToRefresh>
 
       <BottomNav />
 

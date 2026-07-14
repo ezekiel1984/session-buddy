@@ -263,19 +263,39 @@ export default function History() {
     if (!selectedSession) return;
 
     setDeleting(true);
+
+    const queryKey = ['sessions', currentUser?.id];
+    const previousSessions = queryClient.getQueryData(queryKey);
+
     try {
+      // Optimistically remove the dose from the UI immediately
+      if (previousSessions) {
+        queryClient.setQueryData(
+          queryKey,
+          previousSessions.filter(s => s.id !== selectedSession.id)
+        );
+      }
+
+      // Close dialog and clear selection immediately
+      setSelectedSession(null);
+      setShowDeleteSessionDialog(false);
+
       await base44.entities.Session.delete(selectedSession.id);
 
+      toast.success('Dose deleted successfully!');
+
+      // Invalidate queries to refresh stats
       await queryClient.invalidateQueries({ queryKey: ['sessions'] });
       await queryClient.invalidateQueries({ queryKey: ['insights-sessions'] });
       queryClient.invalidateQueries({ queryKey: ['user-stats'] });
-
-      toast.success('Dose deleted successfully!');
-      setSelectedSession(null);
-      setShowDeleteSessionDialog(false);
     } catch (error) {
       console.error('Error deleting dose:', error);
       toast.error('Failed to delete dose. Please try again.');
+
+      // Revert optimistic update on failure
+      if (previousSessions) {
+        queryClient.setQueryData(queryKey, previousSessions);
+      }
     } finally {
       setDeleting(false);
     }
