@@ -12,10 +12,11 @@ import {
 } from 'recharts';
 import { format, parseISO } from 'date-fns';
 
-export default function THCTimelineChart({ 
-  series, 
+export default function THCTimelineChart({
+  series,
   doses,
-  showBlood, 
+  expandedDoses,
+  showBlood,
   bloodThreshold,
   showSaliva,
   salivaThreshold,
@@ -280,7 +281,21 @@ export default function THCTimelineChart({
           />
         )}
 
-        {/* Dose markers removed */}
+        {/* Dose markers — show vertical lines at each dose (including repeats) */}
+        {(expandedDoses || []).map((dose, i) => {
+          const index = getIndexForTime(dose.expandedTimeISO);
+          if (index < 0 || index >= chartData.length) return null;
+          return (
+            <ReferenceLine
+              key={`dose-marker-${i}`}
+              x={index}
+              stroke="#25A55F"
+              strokeWidth={1}
+              strokeDasharray="3 3"
+              opacity={0.4}
+            />
+          );
+        })}
 
         {/* Blood detection time marker */}
         {showBlood && bloodIndex > 0 && bloodIndex < chartData.length && (

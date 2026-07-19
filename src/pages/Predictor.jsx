@@ -434,6 +434,9 @@ export default function Predictor() {
                             <SelectItem value="vape_dry" className="text-white hover:bg-gray-800 focus:bg-gray-800 focus:text-white">
                               Vape (Dry)
                             </SelectItem>
+                            <SelectItem value="vape_cart" className="text-white hover:bg-gray-800 focus:bg-gray-800 focus:text-white">
+                              Vape (Cart)
+                            </SelectItem>
                             <SelectItem value="smoke" className="text-white hover:bg-gray-800 focus:bg-gray-800 focus:text-white">
                               Smoke
                             </SelectItem>
@@ -445,6 +448,9 @@ export default function Predictor() {
                             </SelectItem>
                             <SelectItem value="oil_sublingual" className="text-white hover:bg-gray-800 focus:bg-gray-800 focus:text-white">
                               Oil (Sublingual)
+                            </SelectItem>
+                            <SelectItem value="oil_ingested" className="text-white hover:bg-gray-800 focus:bg-gray-800 focus:text-white">
+                              Oil (Ingested)
                             </SelectItem>
                             <SelectItem value="unknown" className="text-white hover:bg-gray-800 focus:bg-gray-800 focus:text-white">
                               Unknown
@@ -775,6 +781,7 @@ export default function Predictor() {
                       <THCTimelineChart
                         series={simulationResult.series}
                         doses={doses}
+                        expandedDoses={simulationResult.expandedDoses}
                         showBlood={showBlood}
                         bloodThreshold={bloodThreshold}
                         showSaliva={showSaliva}
