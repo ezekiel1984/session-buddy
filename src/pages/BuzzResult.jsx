@@ -67,7 +67,7 @@ export default function BuzzResult() {
   }, [mainSession, showEffectRating, user]); // Added showEffectRating and user to dependencies
 
   const loadSessions = useCallback(async (skipDelay = false) => {
-      try {
+    try {
         logger.debug('[BuzzResult] Starting to load sessions');
 
         const currentUser = await base44.auth.me();
@@ -263,7 +263,8 @@ export default function BuzzResult() {
           setLoading(false);
         }
       }
-  });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Load/reload sessions when navigating to Buzz tab (KeepAlive keeps us mounted)
   useEffect(() => {

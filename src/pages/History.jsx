@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { trackEvent, AnalyticsEvents } from '@/components/utils/analytics';
 import { base44 } from '@/api/base44Client';
@@ -20,6 +20,7 @@ import { useQueryClient, useQuery } from '@tanstack/react-query';
 export default function History() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const location = useLocation();
 
   const [user, setUser] = useState(null);
   const [showAgeGate, setShowAgeGate] = useState(false);
@@ -98,6 +99,13 @@ export default function History() {
     },
     initialData: [],
   });
+
+  // Refetch sessions when returning to the History tab (KeepAlive keeps us mounted)
+  useEffect(() => {
+    if (location.pathname === '/History' && currentUser?.id) {
+      refetchSessions();
+    }
+  }, [location.pathname, currentUser?.id, refetchSessions]);
 
   // Filter individual doses by time
   const filteredSessions = React.useMemo(() => { // Renamed from filteredDoses to filteredSessions as per outline
