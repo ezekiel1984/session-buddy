@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
@@ -93,14 +93,9 @@ export default function LogDose() {
 
   const [thcEstimate, setThcEstimate] = useState(null);
 
-  // Extracted prefill logic — called both on arrival and via custom event
-  const applyPrefill = useCallback(() => {
+  // Apply prefill data to the form
+  const applyPrefillData = useCallback((data) => {
     try {
-      const prefillData = sessionStorage.getItem('dosePrefill');
-      if (!prefillData) return;
-
-      const data = JSON.parse(prefillData);
-
       setFormData(prev => {
         const newFormData = {
           ...prev,
@@ -125,7 +120,6 @@ export default function LogDose() {
         return newFormData;
       });
 
-      sessionStorage.removeItem('dosePrefill');
       toast.success('Dose template loaded! Ready to log again 🔥');
     } catch (error) {
       logger.error('Error loading prefill data:', error);
@@ -133,20 +127,33 @@ export default function LogDose() {
     }
   }, []);
 
-  // Fire on initial mount and when pathname changes to LogDose
+  // Track which navigation we've already processed to avoid double-apply
+  const processedNavKey = useRef(null);
+
+  // PRIMARY: Read prefill from React Router navigation state (most reliable)
+  useEffect(() => {
+    if (location.state?.prefill && processedNavKey.current !== location.key) {
+      processedNavKey.current = location.key;
+      applyPrefillData(location.state.prefill);
+    }
+  }, [location.state, location.key, applyPrefillData]);
+
+  // FALLBACK: Read from sessionStorage on mount/pathname change (for legacy callers)
   useEffect(() => {
     const isOnLogDose = location.pathname === '/LogDose' || location.pathname === '/';
     if (!isOnLogDose) return;
     window.scrollTo(0, 0);
-    applyPrefill();
-  }, [location.pathname, applyPrefill]);
-
-  // Listen for custom event from History's "Hit Again" (works even while cached/hidden)
-  useEffect(() => {
-    const handler = () => applyPrefill();
-    window.addEventListener('dosePrefillReady', handler);
-    return () => window.removeEventListener('dosePrefillReady', handler);
-  }, [applyPrefill]);
+    try {
+      const prefillData = sessionStorage.getItem('dosePrefill');
+      if (prefillData) {
+        const data = JSON.parse(prefillData);
+        applyPrefillData(data);
+        sessionStorage.removeItem('dosePrefill');
+      }
+    } catch (error) {
+      logger.error('Error reading prefill from sessionStorage:', error);
+    }
+  }, [location.pathname, applyPrefillData]);
 
   useEffect(() => {
     const methodDefaults = {

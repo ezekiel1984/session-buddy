@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams, useLocation, Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
@@ -47,6 +47,7 @@ export default function BuzzResult() {
   const [showEffectRating, setShowEffectRating] = useState(false);
   const [newBadges, setNewBadges] = useState([]);
   const [showBadgeCelebration, setShowBadgeCelebration] = useState(false);
+  const hasLoadedOnce = useRef(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -119,10 +120,16 @@ export default function BuzzResult() {
 
         if (recentSessions.length === 0) {
           logger.debug('[BuzzResult] No sessions found after all attempts.');
-          setSessions([]);
+          // Only clear sessions on the very first load — keep existing data on reloads
+          // so a transient fetch failure/empty result doesn't wipe the user's buzz info
+          if (!hasLoadedOnce.current) {
+            setSessions([]);
+          }
           setLoading(false);
           return;
         }
+
+        hasLoadedOnce.current = true;
 
         // Ensure sessions are sorted by startedAt descending to guarantee [0] is the latest by time
         recentSessions.sort((a, b) => new Date(b.startedAt) - new Date(a.startedAt));
@@ -258,11 +265,7 @@ export default function BuzzResult() {
       }
   });
 
-  useEffect(() => {
-    loadSessions();
-  }, [loadSessions]);
-
-  // Reload sessions when returning to Buzz tab (KeepAlive keeps us mounted)
+  // Load/reload sessions when navigating to Buzz tab (KeepAlive keeps us mounted)
   useEffect(() => {
     if (location.pathname === '/BuzzResult') {
       loadSessions(true);

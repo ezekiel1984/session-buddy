@@ -297,21 +297,19 @@ export default function History() {
     await refetchSessions();
   };
 
-  const handlePrefillFromHistory = (dose) => { // Renamed session to dose for clarity
+  const handlePrefillFromHistory = (dose) => {
     try {
-      // Store prefill data in sessionStorage so LogDose can read it
-      sessionStorage.setItem('dosePrefill', JSON.stringify({
-        method: dose.method,
-        strain: dose.strain,
-        dosageMg: dose.dosageMg,
-        rawInput: dose.rawInput || {},
-        // Always set time to "now" for template
-        timeOption: 'now'
-      }));
-
-      // Signal LogDose (even if cached/hidden by KeepAlive) to read the prefill
-      window.dispatchEvent(new CustomEvent('dosePrefillReady'));
-      navigate(createPageUrl('LogDose'));
+      navigate(createPageUrl('LogDose'), {
+        state: {
+          prefill: {
+            method: dose.method,
+            strain: dose.strain,
+            dosageMg: dose.dosageMg,
+            rawInput: dose.rawInput || {},
+            timeOption: 'now'
+          }
+        }
+      });
     } catch (error) {
       console.error('Error preparing prefill dose:', error);
       toast.error('Failed to prepare dose');
