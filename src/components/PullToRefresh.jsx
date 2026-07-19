@@ -12,9 +12,11 @@ export default function PullToRefresh({ onRefresh, children }) {
     const el = containerRef.current;
     if (!el) return;
 
+    const isAtTop = () => window.scrollY === 0 && document.documentElement.scrollTop === 0;
+
     const onTouchStart = (e) => {
-      // Only initiate pull when the container is scrolled to top
-      if (el.scrollTop > 0 || refreshing) {
+      // Only initiate pull when the document is scrolled to the very top
+      if (!isAtTop() || refreshing) {
         pullingRef.current = false;
         return;
       }
@@ -24,8 +26,8 @@ export default function PullToRefresh({ onRefresh, children }) {
 
     const onTouchMove = (e) => {
       if (!pullingRef.current || refreshing) return;
-      // Re-check scrollTop on every move — bail if user has scrolled down within the container
-      if (el.scrollTop > 0) {
+      // Re-check scroll position on every move — bail if user has scrolled down
+      if (!isAtTop()) {
         pullingRef.current = false;
         if (distance > 0) setDistance(0);
         return;

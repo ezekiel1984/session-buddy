@@ -110,7 +110,10 @@ export default function Layout({ children }) {
   if (currentPageName === "Landing" || currentPageName === "ShareView" || currentPageName === "Welcome") {
     return <div className="min-h-screen bg-[#0A0A0B]">{children}</div>;
   }
-  
+
+  // AIChatView defines its own header — hide the global header to avoid overlap
+  const isAIChat = currentPageName === 'AIChatView';
+
   return (
     <>
       <style>{`
@@ -165,7 +168,8 @@ export default function Layout({ children }) {
         }
       `}</style>
       
-      {/* Header with Logo and Settings */}
+      {/* Header with Logo and Settings — hidden for AIChatView which renders its own header */}
+      {!isAIChat && (
       <header className="fixed top-0 left-0 right-0 bg-[#0A0A0B]/95 backdrop-blur-xl border-b border-gray-800 z-40 no-select" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
         <div className="max-w-lg mx-auto px-6 py-3 flex items-center justify-between">
           {isRootTab ? (
@@ -207,13 +211,14 @@ export default function Layout({ children }) {
           </div>
         </div>
       </header>
+      )}
       
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.25, ease: "easeInOut" }}
         className="min-h-screen bg-[#0A0A0B] text-white"
-        style={{ paddingTop: '4rem', paddingBottom: 'calc(env(safe-area-inset-bottom) + 5rem)' }}
+        style={{ paddingTop: isAIChat ? 0 : '4rem', paddingBottom: 'calc(env(safe-area-inset-bottom) + 5rem)' }}
       >
         <KeepAlive activeKey={currentPageName} cacheable={isCacheable}>
           {children}
