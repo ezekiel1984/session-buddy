@@ -1,10 +1,9 @@
 import React from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Settings, HelpCircle, ArrowLeft } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import KeepAlive from "@/components/KeepAlive";
-import { TAB_PAGES } from "@/components/BottomNav";
 import "@/components/utils/purchaseRouter";
 
 export default function Layout({ children, currentPageName }) {
@@ -205,14 +204,19 @@ export default function Layout({ children, currentPageName }) {
         </div>
       </header>
       
-      <div
-        className="min-h-screen bg-[#0A0A0B] text-white"
-        style={{ paddingTop: '4rem', paddingBottom: 'calc(env(safe-area-inset-bottom) + 5rem)' }}
-      >
-        <KeepAlive activeKey={currentPageName} cacheable={TAB_PAGES.has(currentPageName)}>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={currentPageName}
+          initial={{ x: 40, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          exit={{ x: -40, opacity: 0 }}
+          transition={{ duration: 0.25, ease: "easeInOut" }}
+          className="min-h-screen bg-[#0A0A0B] text-white"
+          style={{ paddingTop: '4rem', paddingBottom: 'calc(env(safe-area-inset-bottom) + 5rem)' }}
+        >
           {children}
-        </KeepAlive>
-      </div>
+        </motion.div>
+      </AnimatePresence>
 
     </>
     );
