@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation, Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
@@ -30,6 +30,7 @@ import PullToRefresh from '@/components/PullToRefresh';
 export default function BuzzResult() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cumulativeBuzz, setCumulativeBuzz] = useState(0);
@@ -86,11 +87,6 @@ export default function BuzzResult() {
 
         setUser(currentUser);
         trackEvent(AnalyticsEvents.VIEW_BUZZ_RESULT);
-
-        logger.debug('[BuzzResult] Waiting 4 seconds for database...');
-        if (!skipDelay) {
-          await new Promise(resolve => setTimeout(resolve, 4000));
-        }
 
         logger.debug('[BuzzResult] Fetching sessions for user:', currentUser.id);
 
@@ -265,6 +261,13 @@ export default function BuzzResult() {
   useEffect(() => {
     loadSessions();
   }, [loadSessions]);
+
+  // Reload sessions when returning to Buzz tab (KeepAlive keeps us mounted)
+  useEffect(() => {
+    if (location.pathname === '/BuzzResult') {
+      loadSessions(true);
+    }
+  }, [location.pathname, loadSessions]);
 
   const handleRefresh = async () => {
     await loadSessions(true);

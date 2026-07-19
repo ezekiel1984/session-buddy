@@ -208,21 +208,17 @@ export default function Layout({ children }) {
         </div>
       </header>
       
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentPageName}
-          initial={{ x: 40, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          exit={{ x: -40, opacity: 0 }}
-          transition={{ duration: 0.25, ease: "easeInOut" }}
-          className="min-h-screen bg-[#0A0A0B] text-white"
-          style={{ paddingTop: '4rem', paddingBottom: 'calc(env(safe-area-inset-bottom) + 5rem)' }}
-        >
-          <KeepAlive activeKey={currentPageName} cacheable={isCacheable}>
-            {children}
-          </KeepAlive>
-        </motion.div>
-      </AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.25, ease: "easeInOut" }}
+        className="min-h-screen bg-[#0A0A0B] text-white"
+        style={{ paddingTop: '4rem', paddingBottom: 'calc(env(safe-area-inset-bottom) + 5rem)' }}
+      >
+        <KeepAlive activeKey={currentPageName} cacheable={isCacheable}>
+          {children}
+        </KeepAlive>
+      </motion.div>
 
       <BottomNav />
 
