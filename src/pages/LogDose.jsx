@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
@@ -39,6 +39,7 @@ import { logger } from '@/components/utils/logger';
 
 export default function LogDose() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
@@ -93,6 +94,10 @@ export default function LogDose() {
   const [thcEstimate, setThcEstimate] = useState(null);
 
   useEffect(() => {
+    // KeepAlive keeps this page mounted, so we detect arrival via location
+    const isOnLogDose = location.pathname === '/LogDose' || location.pathname === '/';
+    if (!isOnLogDose) return;
+
     window.scrollTo(0, 0);
 
     try {
@@ -131,7 +136,7 @@ export default function LogDose() {
       logger.error('Error loading prefill data:', error);
       toast.error('Error loading prefill data.');
     }
-  }, []);
+  }, [location.key]);
 
   useEffect(() => {
     const methodDefaults = {

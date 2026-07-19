@@ -6,11 +6,11 @@ import { Info, Save, Check } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
-export default function StrainPotencyInput({ 
-  strainName, 
-  method, 
-  onPotencyLoaded, 
-  userId 
+export default function StrainPotencyInput({
+  strainName,
+  method,
+  onPotencyLoaded,
+  userId
 }) {
   const [strainProfile, setStrainProfile] = useState(null);
   const [thcPercent, setThcPercent] = useState('');
@@ -18,10 +18,11 @@ export default function StrainPotencyInput({
   const [showSaveOption, setShowSaveOption] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  
+
   // Use refs instead of state to track editing without triggering re-renders
   const isEditingRef = useRef(false);
-  const lastLoadedStrainRef = useRef(null);
+  // Track both strainName AND method so changing the method re-loads potency
+  const lastLoadedKeyRef = useRef(null);
   const onPotencyLoadedRef = useRef(onPotencyLoaded);
 
   // Update the ref when callback changes, but don't trigger effect
@@ -41,62 +42,99 @@ export default function StrainPotencyInput({
           setSaved(false);
           setShowSaveOption(false);
           isEditingRef.current = false;
-          lastLoadedStrainRef.current = null;
+          lastLoadedKeyRef.current = null;
           if (onPotencyLoadedRef.current) {
             onPotencyLoadedRef.current(null, null);
           }
           return;
         }
 
-        // FIXED: Don't reload if user is actively editing the same strain
-        if (isEditingRef.current && lastLoadedStrainRef.current === strainName.trim()) {
-          console.log('[StrainPotencyInput] User is editing, skipping reload');
+        // Combined key: strain + method — so changing method triggers reload
+        const currentKey = `${strainName.trim()}|${method}`;
+
+        // Don't reload if user is actively editing the same strain+method
+        if (isEditingRef.current && lastLoadedKeyRef.current === currentKey) {
           return;
         }
 
         try {
+          // Fetch all profiles for this strain name
           const profiles = await base44.entities.StrainProfile.filter({
             strainName: strainName.trim()
           });
 
-          if (profiles.length > 0) {
-            const profile = profiles[0];
+          // Prefer method-specific profile, fall back to legacy (no method field)
+          const methodProfile = profiles.find(p => p.method === method);
+          const legacyProfile = profiles.find(p => !p.method);
+          const profile = methodProfile || legacyProfile || null;
+
+          if (profile) {
             setStrainProfile(profile);
-            
-            // Only update fields if not currently editing or if strain changed
-            if (!isEditingRef.current || lastLoadedStrainRef.current !== strainName.trim()) {
-              console.log('[StrainPotencyInput] Loading saved potency:', profile.thcPercent);
+
+            // Only update fields if not currently editing or strain/method changed
+            if (!isEditingRef.current || lastLoadedKeyRef.current !== currentKey) {
               setThcPercent(profile.thcPercent?.toString() || '');
               setCbdPercent(profile.cbdPercent?.toString() || '');
               setSaved(true);
               setShowSaveOption(false);
               isEditingRef.current = false;
             }
-            
-            lastLoadedStrainRef.current = strainName.trim();
-            
+
+            lastLoadedKeyRef.current = currentKey;
+
             // Notify parent component of loaded potency
             if (onPotencyLoadedRef.current && profile.thcPercent) {
               onPotencyLoadedRef.current(profile.thcPercent, profile.cbdPercent);
             }
           } else {
-            // New strain, show save option
+            // No StrainProfile — try to load THC% from most recent session with same strain+method
             setStrainProfile(null);
-            
-            // Only clear fields if not editing or strain changed
-            if (!isEditingRef.current || lastLoadedStrainRef.current !== strainName.trim()) {
+
+            if (!isEditingRef.current || lastLoadedKeyRef.current !== currentKey) {
               setThcPercent('');
               setCbdPercent('');
+
+              // Fallback: look up most recent session with same strain + method
+              try {
+                const recentSessions = await base44.entities.Session.filter(
+                  { strain: strainName.trim(), method: method },
+                  '-created_date',
+                  1
+                );
+                if (recentSessions.length > 0 && recentSessions[0].rawInput) {
+                  const raw = recentSessions[0].rawInput;
+                  const thcFromSession =
+                    raw.vd_thcPercent ||
+                    raw.smoke_thcPercent ||
+                    raw.dab_thcPercent ||
+                    raw.cart_thcPercent ||
+                    null;
+                  if (thcFromSession) {
+                    setThcPercent(thcFromSession.toString());
+                    if (onPotencyLoadedRef.current) {
+                      onPotencyLoadedRef.current(thcFromSession, null);
+                    }
+                  } else {
+                    if (onPotencyLoadedRef.current) {
+                      onPotencyLoadedRef.current(null, null);
+                    }
+                  }
+                } else {
+                  if (onPotencyLoadedRef.current) {
+                    onPotencyLoadedRef.current(null, null);
+                  }
+                }
+              } catch (sessionError) {
+                console.error('Error loading recent session for potency:', sessionError);
+                if (onPotencyLoadedRef.current) {
+                  onPotencyLoadedRef.current(null, null);
+                }
+              }
             }
-            
+
             setShowSaveOption(true);
             setSaved(false);
-            lastLoadedStrainRef.current = strainName.trim();
-            
-            // Notify parent that no potency was loaded
-            if (onPotencyLoadedRef.current) {
-              onPotencyLoadedRef.current(null, null);
-            }
+            lastLoadedKeyRef.current = currentKey;
           }
         } catch (error) {
           console.error('Error loading strain profile:', error);
@@ -111,7 +149,7 @@ export default function StrainPotencyInput({
     }, 500); // Wait 500ms after user stops typing
 
     return () => clearTimeout(timer);
-  }, [strainName]); // FIXED: Only depend on strainName, not onPotencyLoaded
+  }, [strainName, method]); // React to both strainName and method changes
 
   const handleSaveProfile = async () => {
     if (!strainName?.trim()) {
@@ -137,6 +175,7 @@ export default function StrainPotencyInput({
       const profileData = {
         uid: userId,
         strainName: strainName.trim(),
+        method: method, // Save with method so future lookups are method-specific
         thcPercent: thc,
         cbdPercent: cbd || null,
         lastUsed: new Date().toISOString(),
@@ -153,8 +192,9 @@ export default function StrainPotencyInput({
       setSaved(true);
       setShowSaveOption(false);
       isEditingRef.current = false;
+      lastLoadedKeyRef.current = `${strainName.trim()}|${method}`;
       toast.success('Strain potency saved! 🌿');
-      
+
       // Notify parent
       if (onPotencyLoadedRef.current) {
         onPotencyLoadedRef.current(thc, cbd);
@@ -168,7 +208,6 @@ export default function StrainPotencyInput({
   };
 
   const handleThcChange = (e) => {
-    console.log('[StrainPotencyInput] User editing THC, setting isEditing=true');
     isEditingRef.current = true;
     setThcPercent(e.target.value);
     setShowSaveOption(true);
@@ -176,7 +215,6 @@ export default function StrainPotencyInput({
   };
 
   const handleCbdChange = (e) => {
-    console.log('[StrainPotencyInput] User editing CBD, setting isEditing=true');
     isEditingRef.current = true;
     setCbdPercent(e.target.value);
     setShowSaveOption(true);
@@ -184,7 +222,6 @@ export default function StrainPotencyInput({
   };
 
   const handleFocus = () => {
-    console.log('[StrainPotencyInput] Field focused, setting isEditing=true');
     isEditingRef.current = true;
   };
 

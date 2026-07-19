@@ -10,6 +10,19 @@
       "type": "string",
       "description": "Name of the strain/product"
     },
+    "method": {
+      "type": "string",
+      "enum": [
+        "vape_dry",
+        "vape_cart",
+        "smoke",
+        "dab",
+        "oil_sublingual",
+        "oil_ingested",
+        "edible"
+      ],
+      "description": "Consumption method this potency profile applies to (same strain can have different potency per method)"
+    },
     "thcPercent": {
       "type": "number",
       "minimum": 0,
