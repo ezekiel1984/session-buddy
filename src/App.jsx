@@ -15,14 +15,9 @@ const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
 const MainPage = mainPageKey ? Pages[mainPageKey] : Premium;
 
-const LayoutWrapper = ({ children, currentPageName }) => Layout ?
-  <Layout currentPageName={currentPageName}>{children}</Layout>
-  : <>{children}</>;
-
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
 
-  // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
       <div className="fixed inset-0 flex items-center justify-center">
@@ -31,72 +26,29 @@ const AuthenticatedApp = () => {
     );
   }
 
-  // Handle authentication errors
   if (authError) {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
-      // Redirect to login automatically
       navigateToLogin();
       return null;
     }
   }
 
-  // Render the main app
   return (
-    <Routes>
-      <Route path="/" element={
-        <LayoutWrapper currentPageName={mainPageKey}>
-          <MainPage />
-        </LayoutWrapper>
-      } />
-      {Object.entries(Pages).map(([path, Page]) => (
-        <Route
-          key={path}
-          path={`/${path}`}
-          element={
-            <LayoutWrapper currentPageName={path}>
-              <Page />
-            </LayoutWrapper>
-          }
-        />
-      ))}
-
-      {/* Explicit routes required (pages.config may be empty) */}
-      <Route
-        path="/Premium"
-        element={
-          <LayoutWrapper currentPageName="Premium">
-            <Premium />
-          </LayoutWrapper>
-        }
-      />
-      <Route
-        path="/Privacy"
-        element={
-          <LayoutWrapper currentPageName="Privacy">
-            <Privacy />
-          </LayoutWrapper>
-        }
-      />
-      <Route
-        path="/Terms"
-        element={
-          <LayoutWrapper currentPageName="Terms">
-            <Terms />
-          </LayoutWrapper>
-        }
-      />
-      <Route
-        path="/Support"
-        element={
-          <LayoutWrapper currentPageName="Support">
-            <Support />
-          </LayoutWrapper>
-        }
-      />
-      <Route path="*" element={<PageNotFound />} />
-    </Routes>
+    <Layout>
+      <Routes>
+        <Route path="/" element={<MainPage />} />
+        {Object.entries(Pages).map(([path, Page]) => (
+          <Route key={path} path={`/${path}`} element={<Page />} />
+        ))}
+        <Route path="/Premium" element={<Premium />} />
+        <Route path="/Privacy" element={<Privacy />} />
+        <Route path="/Terms" element={<Terms />} />
+        <Route path="/Support" element={<Support />} />
+        <Route path="*" element={<PageNotFound />} />
+      </Routes>
+    </Layout>
   );
 };
 

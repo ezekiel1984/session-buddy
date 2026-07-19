@@ -6,7 +6,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { BarChart3, TrendingUp, Calendar, Flame, Clock, Zap, Share2, FlaskConical, Crown, Trophy } from 'lucide-react';
 import { calculateUserStats } from '@/components/utils/statsCalculator';
-import BottomNav from '@/components/BottomNav';
 import BloodTHCGraph from '@/components/BloodTHCGraph';
 import LoadingScreen from '@/components/LoadingScreen';
 import AgeGate from '@/components/AgeGate';
@@ -357,7 +356,7 @@ export default function Insights() {
             </Button>
           </div>
         </div>
-        <BottomNav />
+        
       </div>
     );
   }
@@ -514,7 +513,7 @@ export default function Insights() {
           </div>
         </div>
         </PullToRefresh>
-        <BottomNav />
+        
         </div>
         );
         }
@@ -908,7 +907,7 @@ export default function Insights() {
       </div>
 
       </PullToRefresh>
-      <BottomNav />
+      
 
       {stats && sessions.length > 0 && (
         <ShareStatsModal

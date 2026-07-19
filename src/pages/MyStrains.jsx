@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -6,8 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Sparkles, Loader2, Leaf, Edit, Save, X, Trash2, ArrowLeft } from 'lucide-react';
-import BottomNav from '@/components/BottomNav';
+import { Sparkles, Loader2, Leaf, Edit, Save, X, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import {
@@ -145,14 +143,6 @@ export default function MyStrains() {
 
       <div className="relative z-10 max-w-lg mx-auto px-6 py-8">
         <div className="flex items-center gap-4 mb-6">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate(createPageUrl('Settings'))}
-            className="text-gray-400 hover:text-white hover:bg-gray-800 flex-shrink-0"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
           <div className="flex items-center gap-3 flex-1">
             <div className="p-2 rounded-xl bg-[#25A55F]/10">
               <Leaf className="w-6 h-6 text-[#25A55F]" />
@@ -331,7 +321,7 @@ export default function MyStrains() {
         )}
       </div>
 
-      <BottomNav />
+      
 
       <AlertDialog open={!!strainToDelete} onOpenChange={() => setStrainToDelete(null)}>
         <AlertDialogContent className="bg-[#141416] border-gray-800">

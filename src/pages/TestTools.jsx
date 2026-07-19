@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Wrench, Loader2, Trash2, TestTube, Cookie } from 'lucide-react';
 import { getBuzzAndSoberInfo } from '@/components/utils/buzzCalculator';
 import { toast } from 'sonner';
-import BottomNav from '@/components/BottomNav';
 
 export default function TestTools() {
   const navigate = useNavigate();
@@ -232,7 +231,7 @@ export default function TestTools() {
         </div>
       </div>
 
-      <BottomNav />
+      
     </div>
   );
 }

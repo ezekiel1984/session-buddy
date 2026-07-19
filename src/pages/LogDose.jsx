@@ -17,7 +17,6 @@ import {
 } from '@/components/utils/absorptionConstants';
 import { trackEvent, AnalyticsEvents } from '@/components/utils/analytics';
 import { toast } from 'sonner';
-import BottomNav from '@/components/BottomNav';
 import AgeGate from '@/components/AgeGate';
 import LoadingScreen from '@/components/LoadingScreen';
 import AbsorptionInfoModal from '@/components/AbsorptionInfoModal';
@@ -1709,7 +1708,7 @@ export default function LogDose() {
         <AbsorptionInfoModal isOpen={showAbsorptionInfo} onClose={() => setShowAbsorptionInfo(false)} />
       )}
 
-      <BottomNav />
+      
     </div>
   );
 }

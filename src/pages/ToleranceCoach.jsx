@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
@@ -10,7 +9,6 @@ import { trackEvent } from '@/components/utils/analytics';
 import ToleranceGauge from '@/components/tolerance/ToleranceGauge';
 import RecoveryChart from '@/components/tolerance/RecoveryChart';
 import DoseAdjuster from '@/components/tolerance/DoseAdjuster';
-import BottomNav from '@/components/BottomNav';
 import LoadingScreen from '@/components/LoadingScreen';
 import { toast } from 'sonner';
 import OnboardingTooltip from '@/components/OnboardingTooltip';
@@ -255,7 +253,7 @@ export default function ToleranceCoach() {
               </Button>
             </div>
           </div>
-          <BottomNav />
+          
         </div>
       </>
     );
@@ -301,7 +299,7 @@ export default function ToleranceCoach() {
               </div>
             </div>
           </div>
-          <BottomNav />
+          
         </div>
       </>
     );
@@ -397,7 +395,7 @@ export default function ToleranceCoach() {
           </div>
         </div>
         
-        <BottomNav />
+        
       </div>
     </>
   );

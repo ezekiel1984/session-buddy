@@ -4,10 +4,9 @@ import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Trophy, Share2 } from 'lucide-react';
+import { Trophy, Share2 } from 'lucide-react';
 import { BADGE_DEFINITIONS } from '@/components/utils/badgeChecker';
 import BadgeCard from '@/components/BadgeCard';
-import BottomNav from '@/components/BottomNav';
 import LoadingScreen from '@/components/LoadingScreen';
 import ShareBadgeModal from '@/components/ShareBadgeModal';
 
@@ -78,14 +77,6 @@ export default function Badges() {
         <div className="max-w-lg mx-auto px-6 py-8">
           {/* Header */}
           <div className="flex items-center gap-4 mb-8">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate(createPageUrl('Insights'))}
-              className="text-gray-400 hover:text-white hover:bg-gray-800 flex-shrink-0"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-1">
                 <Trophy className="w-7 h-7 text-[#25A55F]" />
@@ -152,7 +143,7 @@ export default function Badges() {
           </div>
         </div>
 
-        <BottomNav />
+        
       </div>
 
       {/* Share Badge Modal */}

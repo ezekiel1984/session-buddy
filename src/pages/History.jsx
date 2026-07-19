@@ -5,7 +5,6 @@ import { trackEvent, AnalyticsEvents } from '@/components/utils/analytics';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Calendar, Trash2, Loader2, Clock, RefreshCw, Brain, Plus, ChevronDown, ChevronUp } from 'lucide-react';
-import BottomNav from '@/components/BottomNav';
 import AgeGate from '@/components/AgeGate';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -608,7 +607,7 @@ export default function History() {
       </div>
 
       </PullToRefresh>
-      <BottomNav />
+      
 
       <Dialog open={showDeleteAllDialog} onOpenChange={setShowDeleteAllDialog}>
         <DialogContent className="bg-[#141416] border-gray-800">

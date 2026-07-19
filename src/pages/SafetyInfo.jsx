@@ -1,9 +1,7 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Shield, AlertTriangle, Clock, Heart, Scale, BookOpen, ArrowLeft } from 'lucide-react';
-import BottomNav from '@/components/BottomNav';
+import { Shield, AlertTriangle, Clock, Heart, Scale, BookOpen } from 'lucide-react';
 
 export default function SafetyInfo() {
   const navigate = useNavigate();
@@ -11,15 +9,6 @@ export default function SafetyInfo() {
   return (
     <div className="min-h-screen bg-[#0A0A0B] text-white pb-24">
       <div className="max-w-2xl mx-auto px-6 py-8">
-        <Button
-          onClick={() => navigate(-1)}
-          variant="ghost"
-          className="mb-6 text-gray-400 hover:text-white hover:bg-gray-800"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
-        </Button>
-
         <div className="flex items-center gap-3 mb-6">
           <div className="w-12 h-12 bg-[#25A55F]/10 rounded-xl flex items-center justify-center">
             <Shield className="w-6 h-6 text-[#25A55F]" />
@@ -183,7 +172,7 @@ export default function SafetyInfo() {
         </div>
       </div>
 
-      <BottomNav />
+      
     </div>
   );
 }

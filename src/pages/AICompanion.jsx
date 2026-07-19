@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -7,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { MessageCircle, Plus, Sparkles, Crown } from 'lucide-react'; // Added Crown import
 import { toast } from 'sonner';
 import AIChatList from '../components/AIChatList';
-import BottomNav from '../components/BottomNav';
 import { trackEvent, AnalyticsEvents } from '../components/utils/analytics';
 import OnboardingTooltip from '@/components/OnboardingTooltip';
 
@@ -312,7 +310,7 @@ export default function AICompanion() {
             </Button>
           </div>
         </div>
-        <BottomNav />
+        
       </div>
     );
   }
@@ -366,7 +364,7 @@ export default function AICompanion() {
           <AIChatList chats={chats} onDeleteChat={handleDeleteChat} />
         )}
       </div>
-      <BottomNav />
+      
     </div>
   );
 }

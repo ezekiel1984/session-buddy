@@ -25,7 +25,6 @@ import {
   FlaskConical // Added FlaskConical for the new premium page
 } from 'lucide-react';
 import { toast } from 'sonner';
-import BottomNav from '@/components/BottomNav';
 import LoadingScreen from '@/components/LoadingScreen';
 import THCTimelineChart from '@/components/predictor/THCTimelineChart';
 import OnboardingTooltip from '@/components/OnboardingTooltip';
@@ -354,7 +353,7 @@ export default function Predictor() {
             </Button>
           </div>
         </div>
-        <BottomNav />
+        
       </div>
     );
   }
@@ -865,7 +864,7 @@ export default function Predictor() {
         </div>
       </div>
 
-      <BottomNav />
+      
     </div>
   );
 }

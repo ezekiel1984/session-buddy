@@ -16,7 +16,6 @@ import {
 } from '@/components/utils/buzzCalculator';
 import { trackEvent, AnalyticsEvents } from '@/components/utils/analytics';
 import { logger } from '@/components/utils/logger';
-import BottomNav from '@/components/BottomNav';
 import { motion } from 'framer-motion';
 import AgeGate from '@/components/AgeGate';
 import LoadingScreen from '@/components/LoadingScreen';
@@ -609,7 +608,7 @@ NO medical advice. NO dosing recommendations. Focus on awareness and mindfulness
             </div>
           </div>
         </div>
-        <BottomNav />
+        
       </div>
     );
   }
@@ -939,7 +938,7 @@ NO medical advice. NO dosing recommendations. Focus on awareness and mindfulness
       </div>
     </PullToRefresh>
 
-      <BottomNav />
+      
 
       {/* Badge Celebration */}
       {showBadgeCelebration && newBadges.length > 0 && (

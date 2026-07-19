@@ -5,12 +5,16 @@ import { createPageUrl } from "@/utils";
 import { Settings, HelpCircle, ArrowLeft } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import "@/components/utils/purchaseRouter";
+import KeepAlive from "@/components/KeepAlive";
+import BottomNav, { TAB_PAGES } from "@/components/BottomNav";
 
-export default function Layout({ children, currentPageName }) {
+export default function Layout({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const currentPageName = location.pathname === '/' ? 'Landing' : location.pathname.slice(1).split('/')[0];
   const rootTabPages = new Set(['LogDose','BuzzResult','History','AICompanion','Predictor','Insights','ToleranceCoach']);
   const isRootTab = rootTabPages.has(currentPageName);
+  const isCacheable = TAB_PAGES.has(currentPageName);
   // Sync dark mode with system preference
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -214,9 +218,13 @@ export default function Layout({ children, currentPageName }) {
           className="min-h-screen bg-[#0A0A0B] text-white"
           style={{ paddingTop: '4rem', paddingBottom: 'calc(env(safe-area-inset-bottom) + 5rem)' }}
         >
-          {children}
+          <KeepAlive activeKey={currentPageName} cacheable={isCacheable}>
+            {children}
+          </KeepAlive>
         </motion.div>
       </AnimatePresence>
+
+      <BottomNav />
 
     </>
     );
