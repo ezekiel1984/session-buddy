@@ -309,6 +309,8 @@ export default function History() {
         timeOption: 'now'
       }));
 
+      // Signal LogDose (even if cached/hidden by KeepAlive) to read the prefill
+      window.dispatchEvent(new CustomEvent('dosePrefillReady'));
       navigate(createPageUrl('LogDose'));
     } catch (error) {
       console.error('Error preparing prefill dose:', error);

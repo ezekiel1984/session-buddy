@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
@@ -93,50 +93,60 @@ export default function LogDose() {
 
   const [thcEstimate, setThcEstimate] = useState(null);
 
-  useEffect(() => {
-    // KeepAlive keeps this page mounted, so we detect arrival via location
-    const isOnLogDose = location.pathname === '/LogDose' || location.pathname === '/';
-    if (!isOnLogDose) return;
-
-    window.scrollTo(0, 0);
-
+  // Extracted prefill logic — called both on arrival and via custom event
+  const applyPrefill = useCallback(() => {
     try {
       const prefillData = sessionStorage.getItem('dosePrefill');
-      if (prefillData) {
-        const data = JSON.parse(prefillData);
+      if (!prefillData) return;
 
-        setFormData(prev => {
-          const newFormData = {
-            ...prev,
-            method: data.method || prev.method,
-            strain: data.strain || '',
-            timeOption: 'now',
-            customTime: '',
-            quickSelect: data.quickSelect || 'moderate',
-          };
+      const data = JSON.parse(prefillData);
 
-          if (data.rawInput) {
-            Object.keys(data.rawInput).forEach(key => {
-              if (newFormData.hasOwnProperty(key)) {
-                if (typeof data.rawInput[key] === 'number') {
-                  newFormData[key] = data.rawInput[key].toString();
-                } else {
-                  newFormData[key] = data.rawInput[key];
-                }
+      setFormData(prev => {
+        const newFormData = {
+          ...prev,
+          method: data.method || prev.method,
+          strain: data.strain || '',
+          timeOption: 'now',
+          customTime: '',
+          quickSelect: data.quickSelect || 'moderate',
+        };
+
+        if (data.rawInput) {
+          Object.keys(data.rawInput).forEach(key => {
+            if (newFormData.hasOwnProperty(key)) {
+              if (typeof data.rawInput[key] === 'number') {
+                newFormData[key] = data.rawInput[key].toString();
+              } else {
+                newFormData[key] = data.rawInput[key];
               }
-            });
-          }
-          return newFormData;
-        });
+            }
+          });
+        }
+        return newFormData;
+      });
 
-        sessionStorage.removeItem('dosePrefill');
-        toast.success('Dose template loaded! Ready to log again 🔥');
-      }
+      sessionStorage.removeItem('dosePrefill');
+      toast.success('Dose template loaded! Ready to log again 🔥');
     } catch (error) {
       logger.error('Error loading prefill data:', error);
       toast.error('Error loading prefill data.');
     }
-  }, [location.key]);
+  }, []);
+
+  // Fire on initial mount and when pathname changes to LogDose
+  useEffect(() => {
+    const isOnLogDose = location.pathname === '/LogDose' || location.pathname === '/';
+    if (!isOnLogDose) return;
+    window.scrollTo(0, 0);
+    applyPrefill();
+  }, [location.pathname, applyPrefill]);
+
+  // Listen for custom event from History's "Hit Again" (works even while cached/hidden)
+  useEffect(() => {
+    const handler = () => applyPrefill();
+    window.addEventListener('dosePrefillReady', handler);
+    return () => window.removeEventListener('dosePrefillReady', handler);
+  }, [applyPrefill]);
 
   useEffect(() => {
     const methodDefaults = {
