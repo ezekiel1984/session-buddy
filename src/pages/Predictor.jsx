@@ -28,6 +28,7 @@ import { toast } from 'sonner';
 import LoadingScreen from '@/components/LoadingScreen';
 import THCTimelineChart from '@/components/predictor/THCTimelineChart';
 import OnboardingTooltip from '@/components/OnboardingTooltip';
+import { runSimulation as simulateDoses } from '@/components/predictor/lib/simulate';
 
 export default function Predictor() {
   const navigate = useNavigate();
@@ -165,13 +166,9 @@ export default function Predictor() {
         }
       };
 
-      const result = await base44.functions.invoke('predictorSimulate', payload);
+      const result = simulateDoses(payload);
 
-      if (result.data.error) {
-        throw new Error(result.data.error);
-      }
-
-      setSimulationResult(result.data);
+      setSimulationResult(result);
       toast.success('Simulation complete!');
 
     } catch (error) {

@@ -5,12 +5,20 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Send, Loader2, Sparkles, Trash2, Pencil, Check, X } from 'lucide-react';
+import { Send, Loader2, Sparkles, Trash2, Pencil, Check, X } from 'lucide-react';
 import { trackEvent, AnalyticsEvents } from '@/components/utils/analytics';
 import MessageBubble from '@/components/MessageBubble';
 import LoadingScreen from '@/components/LoadingScreen';
 import { toast } from 'sonner';
 import { logger } from '@/components/utils/logger';
+
+const TONE_INSTRUCTIONS = {
+  zen: 'Tone: Calm, mindful, and reassuring. Focus on balance, breathing, and presence. Use gentle, soothing language. Be a grounding influence.',
+  rick: 'Tone: Witty, sarcastic, and scientific (like Rick Sanchez). Don\'t suffer fools, but give good advice. Focus on the raw data and biology.',
+  lofi: 'Tone: Chill, aesthetic, low-key. Vibes are immaculate. Short, relaxed sentences. Use soft language.',
+  clinical: 'Tone: Objective, precise, data-focused. Use correct terminology (bioavailability, metabolic clearance, half-life). Professional, educational, but not cold.',
+  dude: 'Tone: The ultimate chill homie. "The Dude" energy. Very relaxed, conversational, friendly. Supportive and easygoing.'
+};
 
 export default function AIChatView() {
   const navigate = useNavigate();
@@ -18,7 +26,7 @@ export default function AIChatView() {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const chatId = searchParams.get('chatId');
-  
+
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [userMessage, setUserMessage] = useState('');
@@ -37,15 +45,13 @@ export default function AIChatView() {
     const loadUser = async () => {
       try {
         const currentUser = await base44.auth.me();
-        logger.debug('[AIChatView] Current user:', currentUser?.id, 'isPremium:', currentUser?.isPremium);
         setUser(currentUser);
-        
+
         if (!currentUser.isPremium) {
-          logger.debug('[AIChatView] User not premium, redirecting');
           navigate(createPageUrl('Premium'));
           return;
         }
-        
+
         setAuthLoading(false);
       } catch (error) {
         logger.error('[AIChatView] Error loading user:', error);
@@ -58,28 +64,12 @@ export default function AIChatView() {
   const { data: chat, isLoading: chatLoading, error: chatError } = useQuery({
     queryKey: ['chat', chatId],
     queryFn: async () => {
-      if (!chatId) {
-        logger.debug('[AIChatView] No chatId provided');
-        return null;
-      }
-      
-      logger.debug('[AIChatView] Querying for chat:', chatId);
-      logger.debug('[AIChatView] User ID:', user?.id);
-      
+      if (!chatId) return null;
       try {
         const chats = await base44.entities.Chat.filter({ id: chatId });
-        logger.debug('[AIChatView] Query returned:', chats.length, 'chats');
-        
-        if (chats.length > 0) {
-          logger.debug('[AIChatView] Found chat:', JSON.stringify(chats[0], null, 2));
-        } else {
-          logger.debug('[AIChatView] No chat found with id:', chatId);
-        }
-        
         return chats[0] || null;
       } catch (error) {
         logger.error('[AIChatView] Error querying chat:', error);
-        logger.debug('[AIChatView] Error details:', JSON.stringify(error, null, 2));
         throw error;
       }
     },
@@ -91,7 +81,6 @@ export default function AIChatView() {
 
   const activeChat = chat || chatFromState;
 
-  // Update editedTitle when chat changes
   useEffect(() => {
     if (activeChat?.title) {
       setEditedTitle(activeChat.title);
@@ -134,141 +123,204 @@ export default function AIChatView() {
     }
   });
 
-  const sendMessageMutation = useMutation({
-    mutationFn: async ({ message, currentChatId, userVisibleMessage }) => {
-      await base44.entities.Message.create({
-        chatId: currentChatId,
-        sender: 'user',
-        text: userVisibleMessage || message
-      });
+  // Fetch user stats client-side (replaces backend function that requires Builder+)
+  const fetchUserStatsClientSide = async () => {
+    if (!user?.id) return null;
+    try {
+      const sessions = await base44.entities.Session.filter(
+        { uid: user.id },
+        '-created_date',
+        500
+      );
 
-      const response = await base44.functions.invoke('sendAICompanionMessage', {
-        chatId: currentChatId,
-        userMessage: message,
-        toneMode: activeChat?.toneMode || 'zen'
-      });
+      const now = new Date();
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-      await base44.entities.Message.create({
-        chatId: currentChatId,
-        sender: 'ai',
-        text: response.data.reply
-      });
+      const sessions7d = sessions.filter(s => new Date(s.startedAt) >= sevenDaysAgo);
+      const sessions30d = sessions.filter(s => new Date(s.startedAt) >= thirtyDaysAgo);
 
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
-      trackEvent(AnalyticsEvents.AI_AGENT_MSG);
-    },
-    onError: (error) => {
-      logger.error('Error sending message:', error);
-      toast.error('Failed to send message');
+      const totalThc7d = sessions7d.reduce((sum, s) => sum + (parseFloat(s.dosageMg) || 0), 0);
+      const totalThc30d = sessions30d.reduce((sum, s) => sum + (parseFloat(s.dosageMg) || 0), 0);
+
+      const avgPeakBuzz = sessions7d.length > 0
+        ? sessions7d.reduce((sum, s) => sum + (s.buzzScore || 0), 0) / sessions7d.length
+        : 0;
+
+      const methodCounts = {};
+      sessions7d.forEach(s => { methodCounts[s.method] = (methodCounts[s.method] || 0) + 1; });
+      const mostCommonMethod = Object.keys(methodCounts).length > 0
+        ? Object.entries(methodCounts).sort((a, b) => b[1] - a[1])[0][0]
+        : "None";
+
+      const strainCounts = {};
+      sessions7d.forEach(s => { if (s.strain) strainCounts[s.strain] = (strainCounts[s.strain] || 0) + 1; });
+      const mostUsedStrain = Object.keys(strainCounts).length > 0
+        ? Object.entries(strainCounts).sort((a, b) => b[1] - a[1])[0][0]
+        : "None";
+
+      return {
+        sessions7d: sessions7d.length,
+        sessions30d: sessions30d.length,
+        totalThc7d: Math.round(totalThc7d),
+        totalThc30d: Math.round(totalThc30d),
+        avgPeakBuzz: Math.round(avgPeakBuzz * 10) / 10,
+        mostCommonMethod,
+        mostUsedStrain,
+        totalSessions: sessions.length
+      };
+    } catch (error) {
+      logger.error('[AIChatView] Error fetching stats client-side:', error);
+      return null;
     }
-  });
-
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      requestAnimationFrame(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-      });
-    }
-  }, [messages]);
-
-  useEffect(() => {
-    if (isTyping && messagesEndRef.current) {
-      requestAnimationFrame(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-      });
-    }
-  }, [isTyping]);
-
-  // Focus title input when editing starts
-  useEffect(() => {
-    if (editingTitle && titleInputRef.current) {
-      // autoFocus attribute handles initial focus, this is for selecting text
-      titleInputRef.current.select();
-    }
-  }, [editingTitle]);
-
-  const detectStatsKeywords = (message) => {
-    const lowerMessage = message.toLowerCase();
-    const statsKeywords = [
-      'stats', 'statistics', 'stat', 'data', 'numbers', 'usage', 'consumption',
-      'how much', 'how many', 'patterns', 'pattern', 'trends', 'trend', 
-      'history', 'historical', 'tracking', 'track', 'go over', 'show me',
-      'tell me', 'give me', 'breakdown', 'break down', 'summary', 'summarize',
-      'rundown', 'run down', 'overview', 'analyze', 'analysis', 'insights', 
-      'insight', 'review', 'last week', 'last month', 'this week', 'this month',
-      'last 7 days', 'last 30 days', 'past week', 'past month', 'recent',
-      'lately', 'total', 'average', 'how often', 'frequency', 'habit', 'habits',
-      'use', 'using', 'used', 'sessions', 'session count', 'thc intake',
-      'method breakdown', 'strain breakdown', 'consumption patterns'
-    ];
-    
-    return statsKeywords.some(keyword => lowerMessage.includes(keyword));
   };
 
-  const detectToleranceKeywords = (message) => {
-    const lowerMessage = message.toLowerCase();
-    const toleranceKeywords = [
-      'tolerance', 'tolerance level', 'my tolerance', "what's my tolerance",
-      'whats my tolerance', 'tolerance setting', 'current tolerance'
-    ];
-    
-    return toleranceKeywords.some(keyword => lowerMessage.includes(keyword));
+  // Build AI prompt and call InvokeLLM directly (replaces backend function)
+  const generateAIResponse = async (enrichedMessage, conversationHistory) => {
+    const toneMode = activeChat?.toneMode || 'zen';
+    const toneInstruction = TONE_INSTRUCTIONS[toneMode] || TONE_INSTRUCTIONS.zen;
+
+    let firstName = user?.firstName;
+    if (!firstName && user?.full_name) {
+      firstName = user.full_name.split(' ')[0];
+    }
+    if (!firstName) firstName = 'friend';
+
+    // Get active session timing context
+    let timingContext = '';
+    try {
+      const recentSessions = await base44.entities.Session.filter(
+        { uid: user.id },
+        '-created_date',
+        5
+      );
+      const now = new Date();
+      const activeSessions = recentSessions.filter(s => {
+        try {
+          const soberTime = new Date(s.soberAt);
+          return !isNaN(soberTime.getTime()) && soberTime > now;
+        } catch { return false; }
+      });
+
+      if (activeSessions.length > 0) {
+        const mostRecent = activeSessions.reduce((newest, s) => {
+          const sTime = new Date(s.startedAt);
+          const newestTime = new Date(newest.startedAt);
+          return sTime > newestTime ? s : newest;
+        });
+        const minutesSince = Math.round((now - new Date(mostRecent.startedAt)) / 60000);
+        const methodPeakTimes = { vape_dry: 10, vape_cart: 10, smoke: 10, dab: 5, oil_sublingual: 30, oil_ingested: 90, edible: 90 };
+        const peakTime = methodPeakTimes[mostRecent.method] || 10;
+
+        if (minutesSince < peakTime - 2) {
+          timingContext = `This dose was taken ${minutesSince}m ago — effects are building toward peak (expected at ~${peakTime}m).`;
+        } else if (minutesSince < peakTime + 5) {
+          timingContext = `This dose was taken ${minutesSince}m ago — at or near peak effects now.`;
+        } else {
+          const hoursSince = Math.floor(minutesSince / 60);
+          timingContext = `The most recent dose was ${hoursSince > 0 ? `${hoursSince}h ` : ''}${minutesSince % 60}m ago — past peak, effects are tapering.`;
+        }
+      }
+    } catch (e) {
+      logger.warn('[AIChatView] Could not fetch timing context:', e);
+    }
+
+    const systemPrompt = `You are "Session Buddy AI", an intelligent, data-driven, and supportive cannabis coaching companion for ${firstName}.
+Your mission is to help the user consume mindfully, track their usage, and stay safe.
+
+CORE PERSONA & ROLE:
+- **Supportive Coach:** You are non-judgmental, warm, and conversational. You are here to help, not lecture.
+- **Data-Driven:** You love numbers. Use the user's session data (provided below) to explain their buzz, tolerance, and patterns. Give specific, actionable advice based on the data — don't be cagey or evasive.
+- **Harm Reduction:** You ALWAYS encourage safe limits, hydration, and breaks. You NEVER encourage reckless use.
+- **Educational:** You explain the "science" simply (e.g., bio-availability, decay curves) to empower the user.
+- **Direct & Helpful:** Give real, practical advice. Don't hedge excessively. If the user asks about their consumption, give them concrete numbers and recommendations based on their data.
+
+CRITICAL BOUNDARIES:
+1. **NOT A Doctor:** You do NOT give medical advice, diagnose, or prescribe.
+2. **Legal & Safety:** Do NOT help with illegal acts. DO NOT advise driving or operating machinery while impaired.
+3. **Disclaimers:** Remind the user that all "Predictor" and "Buzz" numbers are educational estimates, not medical facts.
+
+TONE SETTING (${toneMode}):
+${toneInstruction}
+
+CURRENT STATUS & DATA:
+${timingContext ? `[ACTIVE SESSION DATA]: ${timingContext}` : '[STATUS]: No active sessions detected right now.'}
+
+[SYSTEM INSTRUCTIONS]:
+- If the user's message contains [SYSTEM DATA], use that strictly to answer their questions about stats/history. Be specific and use the actual numbers.
+- Proactively offer help: "Want to plan a session?", "Shall we check your tolerance?", "Need a hydration reminder?"
+- Keep responses concise, helpful, and human-like. 2-4 sentences typically.
+- Use the user's name (${firstName}) naturally.
+
+RECENT CHAT HISTORY:
+${conversationHistory}
+
+USER MESSAGE:
+${enrichedMessage}`;
+
+    const response = await base44.integrations.Core.InvokeLLM({
+      prompt: systemPrompt
+    });
+
+    return typeof response === 'string' ? response : (response?.reply || JSON.stringify(response));
   };
 
   const handleSendMessage = async (e) => {
     e?.preventDefault();
-    
+
     if (!userMessage.trim() || isTyping) return;
-    
+
     const messageToSend = userMessage.trim();
     setUserMessage('');
     setIsTyping(true);
-    
+
     requestAnimationFrame(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
     });
-    
+
     try {
-      const isStatsQuery = detectStatsKeywords(messageToSend);
-      const isToleranceQuery = detectToleranceKeywords(messageToSend);
-      
-      let enrichedMessage = messageToSend;
-      
-      if (isStatsQuery) {
-        try {
-          const [statsResponse, userResponse] = await Promise.all([
-            base44.functions.invoke('getUserStats'),
-            base44.functions.invoke('getCurrentUser')
-          ]);
-          
-          const stats = statsResponse.data;
-          const currentUser = userResponse.data;
-          
-          enrichedMessage = `${messageToSend}\n\n[SYSTEM DATA - Use this to answer the user's query:\nUser: ${currentUser.firstName || currentUser.full_name}\nSessions: ${stats.sessions7d} this week, ${stats.sessions30d} this month\nTHC: ${stats.totalThc7d}mg this week, ${stats.totalThc30d}mg this month\nAverage buzz: ${stats.avgPeakBuzz}/10\nTop method: ${stats.mostCommonMethod}\nFavorite strain: ${stats.mostUsedStrain}\nLongest session: ${stats.longestSession}\nTotal sessions all-time: ${stats.totalSessions}]`;
-        } catch (error) {
-          logger.error('[AIChatView] Error fetching stats:', error);
-        }
-      }
-      
-      if (isToleranceQuery && !isStatsQuery) {
-        try {
-          const userResponse = await base44.functions.invoke('getCurrentUser');
-          const currentUser = userResponse.data;
-          
-          enrichedMessage = `${messageToSend}\n\n[SYSTEM DATA - The user's tolerance level is: ${currentUser.tolerance}]`;
-        } catch (error) {
-          logger.error('[AIChatView] Error fetching user data:', error);
-        }
-      }
-      
-      await sendMessageMutation.mutateAsync({
-        message: enrichedMessage,
-        currentChatId: chatId,
-        userVisibleMessage: messageToSend
+      // Save user message
+      await base44.entities.Message.create({
+        chatId: chatId,
+        sender: 'user',
+        text: messageToSend
       });
+      queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
+
+      // Enrich with stats if relevant
+      let enrichedMessage = messageToSend;
+      const lowerMsg = messageToSend.toLowerCase();
+      const statsKeywords = ['stats', 'statistics', 'data', 'usage', 'consumption', 'how much', 'how many', 'patterns', 'trends', 'history', 'tracking', 'summary', 'insights', 'last week', 'last month', 'recent', 'total', 'average', 'frequency', 'habits', 'breakdown', 'overview', 'analyze'];
+      const wantsStats = statsKeywords.some(kw => lowerMsg.includes(kw));
+
+      if (wantsStats) {
+        const stats = await fetchUserStatsClientSide();
+        if (stats) {
+          enrichedMessage = `${messageToSend}\n\n[SYSTEM DATA — Use these real numbers to answer specifically:\nSessions: ${stats.sessions7d} this week, ${stats.sessions30d} this month\nTHC: ${stats.totalThc7d}mg this week, ${stats.totalThc30d}mg this month\nAverage buzz: ${stats.avgPeakBuzz}/10\nTop method: ${stats.mostCommonMethod}\nFavorite strain: ${stats.mostUsedStrain}\nTotal sessions all-time: ${stats.totalSessions}]`;
+        }
+      }
+
+      // Build conversation history from current messages
+      const conversationHistory = messages
+        .slice(-10)
+        .map(m => `${m.sender === 'user' ? 'User' : 'AI'}: ${m.text}`)
+        .join('\n');
+
+      // Generate AI response directly via InvokeLLM
+      const aiReply = await generateAIResponse(enrichedMessage, conversationHistory);
+
+      // Save AI message
+      await base44.entities.Message.create({
+        chatId: chatId,
+        sender: 'ai',
+        text: aiReply
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
+      trackEvent(AnalyticsEvents.AI_AGENT_MSG);
+    } catch (error) {
+      logger.error('[AIChatView] Error sending message:', error);
+      toast.error('Failed to send message');
     } finally {
       setIsTyping(false);
       inputRef.current?.focus();
@@ -283,15 +335,12 @@ export default function AIChatView() {
   };
 
   const handleDeleteChat = async () => {
-    if (!window.confirm('Delete this chat? This action cannot be undone.')) {
-      return;
-    }
+    if (!window.confirm('Delete this chat? This action cannot be undone.')) return;
 
     setDeleting(true);
 
     try {
       const messagesToDelete = await base44.entities.Message.filter({ chatId });
-      
       for (const message of messagesToDelete) {
         try {
           await base44.entities.Message.delete(message.id);
@@ -311,7 +360,6 @@ export default function AIChatView() {
       }
 
       await queryClient.invalidateQueries({ queryKey: ['chats'] });
-      
       toast.success('Chat deleted successfully');
       navigate(createPageUrl('AICompanion'));
     } catch (error) {
@@ -325,13 +373,7 @@ export default function AIChatView() {
     return <LoadingScreen />;
   }
 
-  if (!activeChat && !chatLoading && !chatError) { // Added chatError to condition
-    logger.debug('[AIChatView] Rendering "not found" state');
-    logger.debug('[AIChatView] chatId:', chatId);
-    logger.debug('[AIChatView] chatFromState:', chatFromState);
-    logger.debug('[AIChatView] chat from query:', chat);
-    logger.debug('[AIChatView] chatError:', chatError);
-    
+  if (!activeChat && !chatLoading && !chatError) {
     return (
       <div className="min-h-screen bg-[#0A0A0B] flex items-center justify-center">
         <div className="text-center px-6">
@@ -348,8 +390,8 @@ export default function AIChatView() {
 
   return (
     <div className="min-h-screen bg-[#0A0A0B] flex flex-col">
-      {/* Header */}
-      <div className="fixed top-0 left-0 right-0 bg-[#0A0A0B]/95 backdrop-blur-xl border-b border-gray-800 z-40">
+      {/* Chat Header - positioned below the global Layout header */}
+      <div className="fixed top-0 left-0 right-0 bg-[#0A0A0B]/95 backdrop-blur-xl border-b border-gray-800 z-40" style={{ top: 'calc(env(safe-area-inset-top) + 3.5rem)' }}>
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3 flex-1">
             <Button
@@ -358,7 +400,7 @@ export default function AIChatView() {
               onClick={() => navigate(createPageUrl('AICompanion'))}
               className="text-gray-400 hover:text-white hover:bg-gray-800"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <X className="w-5 h-5" />
             </Button>
 
             {editingTitle ? (
@@ -390,17 +432,6 @@ export default function AIChatView() {
                   className="text-[#25A55F] hover:text-[#1e8a4c] hover:bg-[#25A55F]/10"
                 >
                   <Check className="w-5 h-5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => {
-                    setEditedTitle(activeChat?.title || 'New Chat');
-                    setEditingTitle(false);
-                  }}
-                  className="text-gray-400 hover:text-white hover:bg-gray-800"
-                >
-                  <X className="w-5 h-5" />
                 </Button>
               </div>
             ) : (
@@ -434,30 +465,19 @@ export default function AIChatView() {
                   disabled={deleting}
                   className="text-gray-400 hover:text-red-500 hover:bg-red-500/10"
                 >
-                  {deleting ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Trash2 className="w-4 h-4" />
-                  )}
+                  {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                 </Button>
               </>
             )}
-            <Button
-              onClick={() => navigate(createPageUrl('Settings'))}
-              variant="outline"
-              className="border-[#25A55F] bg-[#25A55F]/10 text-[#25A55F] hover:bg-[#25A55F] hover:text-white"
-            >
-              <Sparkles className="w-4 h-4 mr-2" />
-              AI
-            </Button>
           </div>
         </div>
       </div>
 
-      <div 
+      {/* Messages */}
+      <div
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto pt-20 pb-24 px-6"
-        style={{ scrollBehavior: 'smooth' }}
+        className="flex-1 overflow-y-auto px-6"
+        style={{ scrollBehavior: 'smooth', paddingTop: 'calc(env(safe-area-inset-top) + 7.5rem)', paddingBottom: 'calc(env(safe-area-inset-bottom) + 11rem)' }}
       >
         <div className="max-w-lg mx-auto space-y-4">
           {messages.length === 0 ? (
@@ -489,8 +509,9 @@ export default function AIChatView() {
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-[#0A0A0B]/95 backdrop-blur-xl border-t border-gray-800">
-        <div className="max-w-lg mx-auto px-6 py-4">
+      {/* Input bar - positioned above the global BottomNav */}
+      <div className="fixed left-0 right-0 bg-[#0A0A0B]/95 backdrop-blur-xl border-t border-gray-800 z-40" style={{ bottom: 'calc(env(safe-area-inset-bottom) + 5rem)' }}>
+        <div className="max-w-lg mx-auto px-6 py-3">
           <form onSubmit={handleSendMessage} className="flex gap-2">
             <Input
               ref={inputRef}
@@ -507,11 +528,7 @@ export default function AIChatView() {
               disabled={!userMessage.trim() || isTyping}
               className="bg-[#25A55F] hover:bg-[#1e8a4c] text-white px-4 h-12"
             >
-              {isTyping ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <Send className="w-5 h-5" />
-              )}
+              {isTyping ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
             </Button>
           </form>
         </div>

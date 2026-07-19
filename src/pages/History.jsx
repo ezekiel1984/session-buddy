@@ -84,20 +84,11 @@ export default function History() {
         200
       );
 
-      let pendingSession = null;
+      // Clear any stale optimistic session — the real session is fetched from the database
       try {
-        const stored = sessionStorage.getItem('latestSession');
-        if (stored) {
-          pendingSession = JSON.parse(stored);
-        }
-      } catch (storageError) {
-        console.error('Error reading sessionStorage:', storageError);
-      }
+        sessionStorage.removeItem('latestSession');
+      } catch {}
 
-      // Add pending session only if it's not already in userSessions (by ID)
-      if (pendingSession && !userSessions.some(s => s.id === pendingSession.id)) {
-        return [pendingSession, ...userSessions];
-      }
       return userSessions;
     },
     enabled: !!currentUser?.id && currentUser?.ageConfirmed && !showAgeGate,

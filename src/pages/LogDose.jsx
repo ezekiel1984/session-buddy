@@ -32,6 +32,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Switch } from '@/components/ui/switch';
 import StrainPotencyInput from '@/components/StrainPotencyInput';
+import StrainAutocomplete from '@/components/StrainAutocomplete';
 import OnboardingTooltip from '@/components/OnboardingTooltip';
 import PullToRefresh from '@/components/PullToRefresh';
 import { logger } from '@/components/utils/logger';
@@ -1408,13 +1409,9 @@ export default function LogDose() {
             <Label className="text-white">
               Strain/Product Name <span className="text-[#25A55F]">*</span>
             </Label>
-            <Input
-              type="text"
-              placeholder="e.g. Blue Dream"
+            <StrainAutocomplete
               value={formData.strain}
-              onChange={(e) => handleChange('strain', e.target.value)}
-              className="bg-[#141416] border-gray-800 text-white"
-              required
+              onChange={(val) => handleChange('strain', val)}
             />
           </div>
 
