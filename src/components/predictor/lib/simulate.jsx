@@ -236,10 +236,8 @@ export function runSimulation(params) {
     }
   }
 
-  // Calculate current status
-  const now = new Date();
-  const currentTHC = calculateTotalTHC(expandedDoses, now, userFactors, halfLife, 0);
-  const currentBuzz = calculateBuzz(currentTHC, maxPeakSingleDose, userFactors.tolerance);
+  // Calculate maximum buzz across the simulated timeline (peak of the session)
+  const maxBuzz = series.reduce((max, s) => (s.buzzScore > max ? s.buzzScore : max), 0);
 
   // Find threshold crossing times (from peak onwards)
   const timeTo1ngMl = findThresholdTime(series, thresholds.blood || 1);
@@ -249,8 +247,7 @@ export function runSimulation(params) {
   const keyMetrics = {
     peakTHC: Math.round(maxTHC * 10) / 10,
     peakTime: maxTHCTime,
-    currentTHC: Math.round(currentTHC * 10) / 10,
-    estimatedBuzz: Math.round(currentBuzz * 10) / 10,
+    estimatedBuzz: Math.round(maxBuzz * 10) / 10,
     timeTo1ngMl,
     timeTo5ngMl,
     soberTime

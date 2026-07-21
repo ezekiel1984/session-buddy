@@ -729,7 +729,7 @@ export default function Predictor() {
                         </p>
                       </div>
                       <div className="p-3 bg-[#0A0A0B] rounded-lg">
-                        <p className="text-xs text-gray-400 mb-1">Est. Buzz</p>
+                        <p className="text-xs text-gray-400 mb-1">Max Buzz</p>
                         <p className="text-2xl font-bold text-[#25A55F]">
                           {simulationResult.keyMetrics.estimatedBuzz} <span className="text-sm text-gray-500">/10</span>
                         </p>
